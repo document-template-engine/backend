@@ -17,7 +17,7 @@ Nikki Nikonor, Дубинин Николай, Тимченко Александ�
 Клонируете репозиторий:
 
 ```bash
-        git clone  git@github.com:document-template-engine/demo-repository.git
+        git clone  git@github.com:document-template-engine/backend.git
 ```
 
 ### Cоздать и активировать виртуальное окружение:
