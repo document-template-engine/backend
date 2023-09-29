@@ -105,12 +105,6 @@ python -m venv venv
         docker compose -f docker-compose.production.yml exec backend python manage.py createsuperuser
 ```
 
-### Выполнить добавление ингредиентов из csv-файла:
-```
-        docker compose -f docker-compose.production.yml exec backend python manage.py importcsv
-```
-
-
 ### Настройки nginx:
 ```
         sudo nano /etc/nginx/sites-enabled/default
