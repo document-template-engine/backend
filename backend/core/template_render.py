@@ -71,13 +71,45 @@ class CustomFilters:
             return words
         return self.inflect_words(words, "datv")
 
+    def noun_plural(self, word: str, n: int) -> str:
+        """Склонение заданного слова (существительное) в зависимости от числа n."""
+        if not self._enabled:
+            return word
+        n = int(n)
+        word = morph.parse(word)[0]
+        words = (
+            word.inflect({"sing", "nomn"}).word,  # 'день'
+            word.inflect({"gent"}).word,  # 'дня'
+            word.inflect({"plur", "gent"}).word,  # 'дней'
+        )
+
+        n_mod100 = n % 100
+        if n % 10 == 1 and n_mod100 != 11:
+            return words[0]
+        elif 2 <= n % 10 <= 4 and (n_mod100 < 10 or n_mod100 >= 20):
+            return words[1]
+        return words[2]
+
+    def adj_plural(self, word: str, n: int) -> str:
+        """Склонение заданного слова (прилагательное) в зависимости от числа n."""
+        if not self._enabled:
+            return word
+        n = int(n)
+        word = morph.parse(word)[0]
+        n_mod100 = n % 100
+        if n % 10 == 1 and n_mod100 != 11:
+            return word.inflect({"sing", "nomn"}).word  # 'новый'
+        return word.inflect({"plur", "gent"}).word  # 'новых'
+
     def get_filters(self):
-        """Возращает словарь вида {тег:функция} для всех фильтров"""
+        """Возвращает словарь вида {тег:функция} для всех фильтров"""
         filters = {
             "fio_short": self.fio_short,
             "fio_title": self.fio_title,
             "genitive": self.genitive,
             "dative": self.dative,
+            "noun_plural": self.noun_plural,
+            "adj_plural": self.adj_plural,
         }
         return filters
 
@@ -102,17 +134,14 @@ class DocumentTemplate:
         self._customfilters.enable(False)  # switch custom filters off
         self.markdown_tags()
         self._template.render(context, jinja_env=self._jinja_env)
-        self._customfilters.enable(True)  # switch filters on
+        self._customfilters.enable(True)  # switch custom filters on
         file_stream = BytesIO()
         self._template.save(file_stream)
         file_stream.seek(0)
         return file_stream
 
-    # def render(self, context: Dict[str, str]):
-    #     self._template.render(context, jinja_env=self._jinja_env)
-
-    # def save(self, result_file_name):
-    #     self._template.save(result_file_name)
+    def save(self, result_file_name):
+        self._template.save(result_file_name)
 
     def get_tags(self) -> List[str]:
         """Ищет и возвращает список тэгов подставновок переменных из шаблона"""
@@ -151,7 +180,7 @@ class DocumentTemplate:
 if __name__ == "__main__":
     pass
     # Примеры использования
-    # # словарь соответствия тэга из шаблона наименованию тэга (Для эсикиза)
+    # словарь соответствия тэга из шаблона наименованию тэга (Для эсикиза)
     # tags_names = {
     #     "Наименование_организации": "Наименование организации",
     #     "дата": "дата",
