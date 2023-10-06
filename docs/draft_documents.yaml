@@ -1,0 +1,1164 @@
+openapi: 3.0.0
+info:
+  title: OpenAPI спецификация Шаблонизатора документов WORD
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  version: 0.0.1
+servers:
+  - url: http://localhost:8080/api/v1/
+    description: Dev server  
+  
+paths:
+
+  /api/users/:
+    get:
+      operationId: Список пользователей
+      description: ''
+      parameters:
+        - name: page
+          required: false
+          in: query
+          description: Номер страницы.
+          schema:
+            type: integer
+        - name: limit
+          required: false
+          in: query
+          description: Количество объектов на странице.
+          schema:
+            type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    example: 123
+                    description: 'Общее количество объектов в базе'
+                  next:
+                    type: string
+                    nullable: true
+                    format: uri
+                    example: /api/users/?page=4
+                    description: 'Ссылка на следующую страницу'
+                  previous:
+                    type: string
+                    nullable: true
+                    format: uri
+                    example: /api/users/?page=2
+                    description: 'Ссылка на предыдущую страницу'
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+                    description: 'Список объектов текущей страницы'
+          description: ''
+      tags:
+        - Пользователи
+    post:
+      operationId: Регистрация пользователя
+      description: ''
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomUserCreate'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomUserResponseOnCreate'
+          description: 'Пользователь успешно создан'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+      tags:
+        - Пользователи
+  
+  /api/users/{id}/:
+    get:
+      operationId: Профиль пользователя
+      description: 'Доступно всем пользователям.'
+      security:
+        - Token: [ ]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: "Уникальный id этого пользователя"
+          schema:
+            type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+      tags:
+        - Пользователи
+  /api/users/me/:
+    get:
+      operationId: Текущий пользователь
+      description: ''
+      parameters: []
+      security:
+        - Token: [ ]
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+      tags:
+        - Пользователи
+  
+  /api/users/set_password/:
+    post:
+      operationId: Изменение пароля
+      description: 'Изменение пароля текущего пользователя'
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetPassword'
+      responses:
+        '204':
+          description: 'Пароль успешно изменен'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+      tags:
+        - Пользователи
+  /api/auth/token/login/:
+    post:
+      operationId: Получить токен авторизации
+      description: Используется для авторизации по емейлу и паролю, чтобы далее использовать токен при запросах.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenCreate'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenGetResponse'
+          description: ''
+      tags:
+        - Пользователи
+  /api/auth/token/logout/:
+    post:
+      operationId: Удаление токена
+      description: Удаляет токен текущего пользователя
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema: {}
+
+      responses:
+        '204':
+          content:
+            application/json:
+              schema: {}
+          description: ''
+        '401':
+          $ref: '#/components/responses/AuthenticationError'
+      tags:
+        - Пользователи
+  
+  /templates:
+    get:
+      summary: Метод получения шаблонов
+      description: Метод предназначен для получения списка всех шаблонов, сохраненных в БД.
+      operationId: getTemplates
+      tags:
+        - Template
+      responses:
+        '200':
+          "description": Список шаблонов
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Templates"
+        default:
+          description: Любая неожиданная ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      summary: Метод добавления нового шаблона в каталог
+      description: Метод предназначен для сохранения в БД данных по нового шаблона.
+      operationId: createTemplate
+      tags:
+        - Template
+      requestBody:
+        required: true
+        content:
+          'application/json':
+            schema:
+              $ref: "#/components/schemas/Template"
+      responses:
+        '200':
+          "description": Подтверждение успешного сохранения
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Template"
+        '400':
+          "description": Некорректные входные данные. Возвращает список атрибутов с ошибками
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        default:
+          description: Любая неожиданная ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /templates/{id}:
+    get:
+      summary: Метод получения шаблона по идентификатору
+      operationId: getTemplateById
+      tags:
+        - Template
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор шаблона
+          schema:
+            type: string
+      responses:
+        '200':
+          "description": Шаблон
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Template"
+        default:
+          description: Любая неожиданная ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      summary: Метод обновления шаблона и в каталоге
+      description: Метод предназначен для обновления в БД данных по имеющейся шаблона.
+      operationId: updateTemplate
+      tags:
+        - Template
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор шаблона
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          'application/json':
+            schema:
+              $ref: "#/components/schemas/Template"
+      responses:
+        '200':
+          "description": Подтверждение успешного обновления
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Template"
+        '400':
+          "description": Некорректные входные данные. Возвращает список атрибутов с ошибками
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        default:
+          description: Любая неожиданная ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Метод удаления шаблона по идентификатору
+      operationId: deleteTemplatyById
+      tags:
+        - Template
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор игрушки
+          schema:
+            type: string
+      responses:
+        '200':
+          "description": Успешное удаление
+          content:
+            'application/json': {}
+        default:
+          description: Любая неожиданная ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /templates/fields:
+    get:
+      summary: Метод получения полей для шаблонов
+      description: Метод предназначен для получения списка всех  полей для шаблонов, сохраненных в БД.
+      operationId: getFields
+      tags:
+        - Template
+      responses:
+        '200':
+          "description": Список полей для шаблонов
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TemplateFields"
+        default:
+          description: Любая неожиданная ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      summary: Метод добавления нового  поля для шаблона в каталог
+      description: Метод предназначен для сохранения в БД данных по нового поля для шаблона.
+      operationId: createFields
+      tags:
+        - Template
+      requestBody:
+        required: true
+        content:
+          'application/json':
+            schema:
+              $ref: "#/components/schemas/TemplateFields"
+      responses:
+        '200':
+          "description": Подтверждение успешного сохранения
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TemplateFields"
+        '400':
+          "description": Некорректные входные данные. Возвращает список атрибутов с ошибками
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        default:
+          description: Любая неожиданная ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /templates/fields/{id}:
+    get:
+      summary: Метод получения для шаблон по идентификатору
+      operationId: getTemplateFieldsById
+      tags:
+        - Template
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор  поле для шаблона
+          schema:
+            type: string
+      responses:
+        '200':
+          "description": Поле Шаблона
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TemplateFields"
+        default:
+          description: Любая неожиданная ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      summary: Метод обновления  поля для шаблона и в каталоге
+      description: Метод предназначен для обновления в БД данных по имеющейся поля для шаблона.
+      operationId: updateTemplateFields
+      tags:
+        - Template
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор поля для шаблона
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          'application/json':
+            schema:
+              $ref: "#/components/schemas/TemplateFields"
+      responses:
+        '200':
+          "description": Подтверждение успешного обновления
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TemplateFields"
+        '400':
+          "description": Некорректные входные данные. Возвращает список атрибутов с ошибками
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        default:
+          description: Любая неожиданная ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Метод удаления поля для шаблона по идентификатору
+      operationId: deleteTemplatyFieldsById
+      tags:
+        - Template
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор поля для шаблона
+          schema:
+            type: string
+      responses:
+        '200':
+          "description": Успешное удаление
+          content:
+            'application/json': {}
+        default:
+          description: Любая неожиданная ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /documents:
+    get:
+      summary: Метод получение  готовый документов
+      description: Метод предназначен для получения списка готовых документов, сохраненных в БД.
+      operationId: getDocuments
+      tags:
+        - Document
+      responses:
+        '200':
+          "description": Список шаблонов
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Document"
+        default:
+          description: Любая неожиданная ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      summary: Метод добавления нового готового\черновика документа в каталог
+      description: Метод предназначен для сохранения в БД данных по нового готового\черновика документа.
+      operationId: createDocument
+      tags:
+        - Template
+      requestBody:
+        required: true
+        content:
+          'application/json':
+            schema:
+              $ref: "#/components/schemas/Document"
+      responses:
+        '200':
+          "description": Подтверждение успешного сохранения
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Document"
+        '400':
+          "description": Некорректные входные данные. Возвращает список атрибутов с ошибками
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        default:
+          description: Любая неожиданная ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  
+  /documents/{id}:
+    get:
+      summary: Метод получения готового\черновика документа по идентификатору
+      operationId: getDocumentById
+      tags:
+        - Document
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор готового\черновика документа
+          schema:
+            type: string
+      responses:
+        '200':
+          "description": Готового\черновика документа
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Document"
+        default:
+          description: Любая неожиданная ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      summary: Метод обновления готового\черновика документа и в каталоге
+      description: Метод предназначен для обновления в БД данных по имеющейся готового\черновика документа.
+      operationId: updateDoc
+      tags:
+        - Document
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор готового\черновика документа
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          'application/json':
+            schema:
+              $ref: "#/components/schemas/Document"
+      responses:
+        '200':
+          "description": Подтверждение успешного обновления
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Document"
+        '400':
+          "description": Некорректные входные данные. Возвращает список атрибутов с ошибками
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        default:
+          description: Любая неожиданная ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Метод удаления готового\черновика документа по идентификатору
+      operationId: deleteDocumentById
+      tags:
+        - Document
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор игрушки
+          schema:
+            type: string
+      responses:
+        '200':
+          "description": Успешное удаление
+          content:
+            'application/json': {}
+        default:
+          description: Любая неожиданная ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /documents/fields:
+    get:
+      summary: Метод получения полей для полей готового документа
+      description: Метод предназначен для получения списка всех  полей готового документа, сохраненных в БД.
+      operationId: getDocumentFields
+      tags:
+        - Template
+      responses:
+        '200':
+          "description": Список полей готового документа
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentFields"
+        default:
+          description: Любая неожиданная ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      summary: Метод добавления нового  полей готового документа в каталог
+      description: Метод предназначен для сохранения в БД данных по нового поля готового документа.
+      operationId: createDocumentFields
+      tags:
+        - Document
+      requestBody:
+        required: true
+        content:
+          'application/json':
+            schema:
+              $ref: "#/components/schemas/DocumentFields"
+      responses:
+        '200':
+          "description": Подтверждение успешного сохранения
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentFields"
+        '400':
+          "description": Некорректные входные данные. Возвращает список атрибутов с ошибками
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        default:
+          description: Любая неожиданная ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /documents/fields/{id}:
+    get:
+      summary: Метод получения поля готового документа по идентификатору
+      operationId: getDocumentFieldsById
+      tags:
+        - Document
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор  поле для шаблона
+          schema:
+            type: string
+      responses:
+        '200':
+          "description": Поле Шаблона
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentFields"
+        default:
+          description: Любая неожиданная ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      summary: Метод обновления  поля поля готового документа и в каталоге
+      description: Метод предназначен для обновления в БД данных по имеющейся поля поля готового документа.
+      operationId: updateDocumentFields
+      tags:
+        - Document
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор поля готового документа
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          'application/json':
+            schema:
+              $ref: "#/components/schemas/DocumentFields"
+      responses:
+        '200':
+          "description": Подтверждение успешного обновления
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentFields"
+        '400':
+          "description": Некорректные входные данные. Возвращает список атрибутов с ошибками
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        default:
+          description: Любая неожиданная ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Метод удаления поля готового документа по идентификатору
+      operationId: deleteDocumentFieldsById
+      tags:
+        - Template
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор поля готового документа
+          schema:
+            type: string
+      responses:
+        '200':
+          "description": Успешное удаление
+          content:
+            'application/json': {}
+        default:
+          description: Любая неожиданная ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+                
+components:
+  schemas:
+    Template:
+      type: object
+      required:
+        - name
+        - owner
+      properties:
+        id:
+          type: string
+          example: 1
+        name:
+          description: Название шаблона
+          type: string
+          example: Дкп квартиры
+        owner:
+          description: владелец
+          type: string
+          example: new
+        template:
+          description: Путь к шаблону
+          type: string
+          example: Found on a street
+        category_id:
+          description: категория шаблона
+          type: string
+          example: Юр лицо
+        modifed:
+          type: string
+          example: 23.09.2023
+        deleted:
+          type: boolean
+          example: True
+            
+    Templates:
+      type: array
+      items:
+        $ref: "#/components/schemas/Template"
+
+    TemplateField:
+      type: object
+      required:
+        - name
+        - template_id
+      properties:
+        id:
+          type: string
+          example: 1
+        name:
+          description: Название поля щаблона
+          type: string
+          example: Дкп квартиры
+        template_id:
+          description: ИД шаблона с которым связано поле
+          type: string
+          example: 2
+        tag:
+          description: Какой то таг, он не точно будет.
+          type: string
+          example: Found on a street
+        hint:
+          description: что показывать как пример для заполнения в окоше на фронте
+          type: string
+          example: Юр лицо
+
+          
+    TemplateFields:
+      type: array
+      items:
+        $ref: "#/components/schemas/TemplateField"
+
+
+    Document:
+      type: object
+      required:
+        - name
+        - owner
+      properties:
+        id:
+          type: string
+          example: 1
+        template_id:
+          description: Название шаблона
+          type: string
+          example: Дкп квартиры
+        owner:
+          description: владелец
+          type: string
+          example: new
+        created:
+          type: string
+          example: 23.09.2023
+        complited:
+          type: boolean
+          example: True
+          
+    Documents:
+      type: array
+      items:
+        $ref: "#/components/schemas/Document"
+  
+
+    DocumentField:
+      type: object
+      required:
+        - name
+        - template_id
+      properties:
+        id:
+          type: string
+          example: 1
+        name:
+          description: Название поля документа
+          type: string
+          example: Дкп квартиры
+        document_id:
+          description: ИД документа с которым связано поле
+          type: string
+          example: 2
+        template_field_id:
+          description: с каким полем в шаблоне связано
+          type: string
+          example: 2
+        value:
+          description: значение в поле
+          type: string
+          example: Юр лицо
+        description:
+          description: описание что там в поле
+          type: string
+          example: Юр лицо
+
+          
+    DocumentFields:
+      type: array
+      items:
+        $ref: "#/components/schemas/DocumentField"      
+  
+    User:
+      description:  'Пользователь (В рецепте - автор рецепта)'
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+          description: "Адрес электронной почты"
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          description: "Уникальный юзернейм"
+          pattern: ^[\w.@+-]+\z
+          maxLength: 150
+        first_name:
+          type: string
+          maxLength: 150
+          description: "Имя"
+          example: "Вася"
+        last_name:
+          type: string
+          maxLength: 150
+          description: "Фамилия"
+          example: "Пупкин"
+      required:
+        - username
+    
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+    CustomUserCreate:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+          description: "Адрес электронной почты"
+          example: "vpupkin@yandex.ru"
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          description: "Уникальный юзернейм"
+          pattern: ^[\w.@+-]+\z
+          maxLength: 150
+          example: "vasya.pupkin"
+        first_name:
+          type: string
+          maxLength: 150
+          description: "Имя"
+          example: "Вася"
+        last_name:
+          type: string
+          maxLength: 150
+          description: "Фамилия"
+          example: "Пупкин"
+        password:
+          type: string
+          maxLength: 150
+          description: "Пароль"
+          example: "Qwerty123"
+      required:
+        - username
+        - password
+        - first_name
+        - last_name
+        - email
+    CustomUserResponseOnCreate:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+          description: "Адрес электронной почты"
+          example: "vpupkin@yandex.ru"
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          description: "Уникальный юзернейм"
+          pattern: ^[\w.@+-]+\z
+          maxLength: 150
+          example: "vasya.pupkin"
+        first_name:
+          type: string
+          maxLength: 150
+          description: "Имя"
+          example: "Вася"
+        last_name:
+          type: string
+          maxLength: 150
+          description: "Фамилия"
+          example: "Пупкин"
+      required:
+        - username
+        - first_name
+        - last_name
+        - email
+    Activation:
+      type: object
+      properties:
+        uid:
+          type: string
+        token:
+          type: string
+      required:
+        - uid
+        - token
+    SendEmailReset:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+      required:
+        - email
+    PasswordResetConfirm:
+      type: object
+      properties:
+        uid:
+          type: string
+        token:
+          type: string
+        new_password:
+          type: string
+      required:
+        - uid
+        - token
+        - new_password
+    UsernameResetConfirm:
+      type: object
+      properties:
+        new_email:
+          type: string
+          format: email
+          maxLength: 254
+    SetPassword:
+      type: object
+      properties:
+        new_password:
+          type: string
+        current_password:
+          type: string
+      required:
+        - new_password
+        - current_password
+    SetUsername:
+      type: object
+      properties:
+        current_password:
+          type: string
+        new_email:
+          type: string
+          format: email
+          maxLength: 254
+      required:
+        - current_password
+    TokenCreate:
+      type: object
+      properties:
+        password:
+          type: string
+        email:
+          type: string
+    TokenGetResponse:
+      type: object
+      properties:
+        TOKEN:
+          type: string
+    
+    ValidationError:
+      description: Стандартные ошибки валидации DRF
+      type: object
+      properties:
+        field_name:
+          description: 'Название поля, в котором произошли ошибки. Таких полей может быть несколько'
+          example: [ 'Обязательное поле.' ]
+          type: array
+          items:
+            type: string
+
+    SelfMadeError:
+      description: Ошибка
+      type: object
+      properties:
+        errors:
+          description: 'Описание ошибки'
+          type: string
+
+    AuthenticationError:
+      description: Пользователь не авторизован
+      type: object
+      properties:
+        detail:
+          description: 'Описание ошибки'
+          example: "Учетные данные не были предоставлены."
+          type: string
+
+    PermissionDenied:
+      description: Недостаточно прав
+      type: object
+      properties:
+        detail:
+          description: 'Описание ошибки'
+          example: "У вас недостаточно прав для выполнения данного действия."
+          type: string
+    NotFound:
+      description: Объект не найден
+      type: object
+      properties:
+        detail:
+          description: 'Описание ошибки'
+          example: "Страница не найдена."
+          type: string
+
+  responses:
+    ValidationError:
+      description: 'Ошибки валидации в стандартном формате DRF'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationError'
+
+    AuthenticationError:
+      description: Пользователь не авторизован
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AuthenticationError'
+
+    PermissionDenied:
+      description: Недостаточно прав
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PermissionDenied'
+
+    NotFound:
+      description: Объект не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/NotFound'
+
+
+  securitySchemes:
+    Token:
+      description: 'Авторизация по токену. <br>
+      Все запросы от имени пользователя должны выполняться с заголовком "Authorization: Token TOKENVALUE"'
+      type: http
+      scheme: token
