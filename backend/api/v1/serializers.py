@@ -1,7 +1,5 @@
-from djoser.serializers import UserSerializer
+from djoser.serializers import UserSerializer, User
 from rest_framework import serializers
-
-from users.models import User
 
 
 class CustomUserSerializer(UserSerializer):

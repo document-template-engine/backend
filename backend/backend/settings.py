@@ -138,9 +138,6 @@ INITIAL_DATA_DIR = BASE_DIR / "static/data/"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = "/app/media"
 
-# Custom User model
-AUTH_USER_MODEL = 'users.User'
-
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
