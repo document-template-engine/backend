@@ -24,7 +24,7 @@ class TestAPIRegistrationAndAuthenticationUser(APITestCase):
             'password': 'qwertyqwerty123'
         }
         cls.response_registration = cls.client.post(
-            '/api/v1/users/',
+            '/api/users/',
             cls.test_user_data
         )
 
@@ -53,20 +53,15 @@ class TestAPIRegistrationAndAuthenticationUser(APITestCase):
         )
 
     def test_authentication(self):
-        """
-        ps.Делаю две отдельные проверки потому что меняется порядок данных.
-        Не смог разобраться с чем это связано!
-        """
         response_registration = self.response_registration
         response_token_login = self.client.post(
-            '/api/v1/auth/token/login/',
+            '/api/auth/token/login/',
             self.test_user_data
         )
         response_auth = self.client.get(
-            '/api/v1/auth/users/me/',
+            '/api/users/me/',
             HTTP_AUTHORIZATION=f'Token {response_token_login.data["auth_token"]}'
         )
-
         self.assertEqual(
             response_registration.data['id'],
             response_auth.data['id'],

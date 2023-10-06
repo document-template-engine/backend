@@ -128,7 +128,6 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
-AUTH_USER_MODEL = 'users.User'
 
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "collected_static"
@@ -138,6 +137,9 @@ INITIAL_DATA_DIR = BASE_DIR / "static/data/"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = "/app/media"
+
+# Custom User model
+AUTH_USER_MODEL = 'users.User'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
@@ -164,4 +166,9 @@ DJOSER = {
         "user": ["djoser.permissions.CurrentUserOrAdminOrReadOnly"],
     },
     "HIDE_USERS": False,
-    "PASSWORD_RESET_CONFIRM_URL": "#/ser_password/{uid}/{token}",}
+    "PASSWORD_RESET_CONFIRM_URL": "#/ser_password/{uid}/{token}",
+    'SERIALIZERS': {
+        'user_create': 'api.v1.serializers.CustomUserSerializer',
+        'user': 'api.v1.serializers.CustomUserSerializer',
+    },
+}
