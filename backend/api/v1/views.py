@@ -1,12 +1,19 @@
 from rest_framework import viewsets
 from rest_framework.permissions import AllowAny
-from serializers import (
+
+from .serializers import (
     TemplateSerializer,
     DocumentSerializer
 )
+from documents.models import (
+    Document,
+    DocumentField,
+    Template,
+    TemplateField
+    )
 
 
-class TemplateViewSet(viewsets):
+class TemplateViewSet(viewsets.ModelViewSet):
     """ Заглушка. Шаблон. """
     queryset = Template.objects.all()
     serializer_class = TemplateSerializer
@@ -19,7 +26,7 @@ class TemplateViewSet(viewsets):
     permissions_classes = (AllowAny,)
 
 
-class TemplateFieldViewSet(viewsets):
+class TemplateFieldViewSet(viewsets.ModelViewSet):
     """ Заглушка. Поле шаблона. """
     queryset = TemplateField.objects.all()
     serializer_class = TemplateSerializer
@@ -32,7 +39,7 @@ class TemplateFieldViewSet(viewsets):
     permissions_classes = (AllowAny,)
 
 
-class DocumentViewSet(viewsets):
+class DocumentViewSet(viewsets.ModelViewSet):
     """ Заглушка. Документ. """
     queryset = Document.objects.all()
     serializer_class = DocumentSerializer
@@ -45,7 +52,7 @@ class DocumentViewSet(viewsets):
     permissions_classes = (AllowAny,)
 
 
-class DocumentFieldViewSet(viewsets):
+class DocumentFieldViewSet(viewsets.ModelViewSet):
     """ Заглушка. Поле документа. """
     queryset = DocumentField.objects.all()
     serializer_class = DocumentSerializer
