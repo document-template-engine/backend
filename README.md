@@ -1,168 +1,205 @@
-
 ## Описание
+Проект разработан в мастерской Яндекс.Практикума. Цель проекта поднять навыки работы с DRF.
+
 ### О проекте
-Галера Яндекс практикума по поднятию навыков работы с DRF
+Проект, представляет собой шаблонизатор документов - это инструмент, который позволяет автоматизировать процесс
+создания документов на основе заданных шаблонов. Этот тип приложения может быть полезен во 
+многих областях, включая бизнес, юриспруденцию, образование и другие.
+
 
 ### Технологии
-Python 3.7 Django 3.2.16
+- **Python - 3.9**
+- **Django - 3.2**
+- **DRF - 3.12.4**
+- **PostgreSQL - 13.10**
+- **Docker - 4.19**
 
 ### Авторы
-Nikki Nikonor, Дубинин Николай, Тимченко Александр, Скуридин Андрей, Гайнбахер Константин и co
+- [Nikki Nikonor](https://github.com/Paymir121)
+- [Дубинин Николай](https://github.com/dubininnik)
+- [Тимченко Александр](https://github.com/ASTimch)
+- [Скуридин Андрей](https://github.com/andrzej-skuridin)
+- [Николай Петров](https://github.com/NikolayPetrow23)
 
-## Установка
-Как развернуть проект на локальной машине;
+
+## Для запуска проекта вам понадобится:
 
 ### Клонирование репозитория:
 Просите разрешение у владельца репозитория( можно со слезами на глазах)
 Клонируете репозиторий:
 
 ```bash
-        git clone  git@github.com:document-template-engine/backend.git
+git clone  git@github.com:document-template-engine/backend.git
 ```
 
 ### Cоздать и активировать виртуальное окружение:
 ```
 python -m venv venv
-* Если у вас Linux/macOS
-    ```
-    source venv/bin/activate
-    ```
 
-* Если у вас windows
-    ```
+# Если у вас Linux/macOS
+
+    source venv/bin/activate
+
+# Если у вас windows
+
     source venv/scripts/activate
-    ```
+
 ```
 ### Установить зависимости из файла requirements.txt:
 ```
-        cd backend
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
+cd backend
+python -m pip install --upgrade pip
+pip install -r requirements.txt
 ```
 
 
 ### Выполнить миграции:
 ```
-        cd backend
-        python manage.py makemigrations
-        python manage.py migrate
+cd backend
+python manage.py makemigrations
+python manage.py migrate
 ```
 
 ### Запустить проект:
 ```
-        cd backend
-        python manage.py runserver
+cd backend
+python manage.py runserver
 ```
 
 ### Создать суперпользователя:
 ```
-        cd backend
-        python manage.py createsuperuser
+cd backend
+python manage.py createsuperuser
 ```
 
 ## Запуск докер контейнеров на локальной машине:
 
 ### Билдим проект и запускаем:
 ```
-        docker compose up --build
+docker compose up --build
 ```
 
 ### Выполнить миграции:
 ```
-        docker compose exec backend python manage.py migrate
+docker compose exec backend python manage.py migrate
 ```
 
 ### Выполнить создание суперпользователя:
 ```
-        docker compose exec backend python manage.py createsuperuser
+docker compose exec backend python manage.py createsuperuser
 ```
 
 ### Выполнить Собрать статику Django:
 ```
-        docker compose exec backend python manage.py collectstatic
-        docker compose exec backend cp -r /app/collected_static/. /backend_static/static/
+docker compose exec backend python manage.py collectstatic
+docker compose exec backend cp -r /app/collected_static/. /backend_static/static/
 ```
 
 ## Запуск докер контейнеров на удаленной машине:
 
 ### Выполнить обновление apt:
 ```
-        sudo apt update
+sudo apt update
 ```
 
 ### Билдим проект и запускаем:
 ```
-        sudo docker compose -f docker-compose.production.yml up --build
+sudo docker compose -f docker-compose.production.yml up --build
 ```
 
 ### Выполнить миграции:
 ```
-        docker compose -f docker-compose.production.yml exec backend python manage.py migrate
+docker compose -f docker-compose.production.yml exec backend python manage.py migrate
 ```
 
 ### Выполнить миграции:
 ```
-        docker compose -f docker-compose.production.yml exec backend python manage.py createsuperuser
+docker compose -f docker-compose.production.yml exec backend python manage.py createsuperuser
 ```
 
 ### Настройки nginx:
 ```
-        sudo nano /etc/nginx/sites-enabled/default
+sudo nano /etc/nginx/sites-enabled/default
 ```
 
-## Примеры
-Некоторые примеры запросов к API.
+## Примеры запросов и ответов к API
 
 ### Регистрация
-
-#### Для смертных
-
-##### End Point
+#### Endpoint
 ```
-POST  api/v1/auth/signup/
+POST  api/v1/users/
 ```
-#####  Body
+#### Пример запроса
 ```
 {
-        "email": "paymisssr@kek.ru",
-        "username": "passsymir121"
+    "email": "user@mail.ru",
+    "password": "testuser123"
 }
 ```
-#### Для admin
-
-#####  End Point
-```
-POST  api/users/
-```
-#####  Body
+#### Пример ответа
 ```
 {
-    "email": "nikox12@mail.ru",
-    "username": "nikjox",
-    "password": "456852Zx",
-    "first_name": "kewk",
-    "last_name": "wsq"
-}
-```
-### Получение токена
-
-##### End Point
-```
-POST  api/auth/token/
-```
-#####  Body
-```
-{
-    "email": "nikox12@mail.ru",
-    "password": "456852Zx",
+    "id": 1, 
+    "email": "user@mail.ru"
 }
 ```
 
-###  Все примеры
+### Аутентификация
+#### Endpoint
+```
+POST  api/v1/auth/token/login/
+```
 
-#### Используя ReDoc
+#### Пример запроса 
+```
+{
+    "email": "user@mail.ru",
+    "password": "testuser123"
+}
+```
 
-##### End Point
-```http
-        /redoc
+#### Пример ответа
+```
+{
+    "auth_token": "7d577706781e1cf230b79813688a85193682b1ff"
+}
+```
+
+### Узнать свои данные
+#### Endpoint
+```
+GET  api/v1/users/me/
+```
+
+#### Пример ответа
+```
+{
+    "id": 1,
+    "email": "user@mail.ru"
+}
+```
+
+### Просмотр списка пользователей
+#### Endpoint
+```
+GET  api/v1/users/
+```
+
+#### Пример ответа
+```
+{
+    "count": 1,
+    "next": null,
+    "previous": null,
+    "results": [
+        {
+            "id": 1,
+            "email": "user@mail.ru"
+        },
+        {
+            "id": 2,
+            "email": "user_2@mail.ru"
+        }
+    ]
+}
 ```
