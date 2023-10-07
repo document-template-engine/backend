@@ -164,4 +164,9 @@ DJOSER = {
         "user": ["djoser.permissions.CurrentUserOrAdminOrReadOnly"],
     },
     "HIDE_USERS": False,
-    "PASSWORD_RESET_CONFIRM_URL": "#/ser_password/{uid}/{token}", }
+    "PASSWORD_RESET_CONFIRM_URL": "#/ser_password/{uid}/{token}",
+    'SERIALIZERS': {
+        'user_create': 'api.v1.serializers.CustomUserSerializer',
+        'user': 'api.v1.serializers.CustomUserSerializer',
+    },
+}
