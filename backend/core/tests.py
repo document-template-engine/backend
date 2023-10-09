@@ -61,7 +61,22 @@ filters_fixture = [
     "dative",
     "noun_plural",
     "adj_plural",
+    "currency_to_words",
 ]
+
+currency_fixture = {
+    1.00: "один рубль, 00 копеек",
+    2: "два рубля, 00 копеек",
+    3.24: "три рубля, 24 копейки",
+    4: "четыре рубля, 00 копеек",
+    5: "пять рублей, 00 копеек",
+    6: "шесть рублей, 00 копеек",
+    7: "семь рублей, 00 копеек",
+    1021: "одна тысяча двадцать один рубль, 00 копеек",
+    2135: "две тысячи сто тридцать пять рублей, 00 копеек",
+    1001000: "один миллион одна тысяча рублей, 00 копеек",
+    1000000001: "один миллиард один рубль, 00 копеек",
+}
 
 
 class Test(TestCase):
@@ -119,4 +134,14 @@ class Test(TestCase):
                     self.filters.noun_plural(noun_fixture, number),
                     result,
                     "Filter noun_plural returns unexpected result",
+                )
+
+    def test_currency_to_words(self):
+        """Проверка фильтра currency_to_words (стоимость прописью)"""
+        for number, result in currency_fixture.items():
+            with self.subTest(number=number, result=result):
+                self.assertEqual(
+                    self.filters.currency_to_words(number),
+                    result,
+                    "Filter currency_to_words returns unexpected result",
                 )
