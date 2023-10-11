@@ -7,6 +7,7 @@ import pymorphy2
 from docx import Document
 from docx.enum.text import WD_COLOR_INDEX
 from docxtpl import DocxTemplate
+from num2words import num2words
 
 morph = pymorphy2.MorphAnalyzer()
 
@@ -101,6 +102,18 @@ class CustomFilters:
             return word.inflect({"sing", "nomn"}).word  # 'новый'
         return word.inflect({"plur", "gent"}).word  # 'новых'
 
+    def currency_to_words(self, num: [str, int, float]) -> str:
+        """Преобразует заданную сумму в представление прописью."""
+        if not self._enabled:
+            return f"Прописью({num})"
+        roubles = round(float(num), 2)
+        if roubles >= 10**14:
+            return num
+        s = num2words(
+            roubles, to="currency", lang="ru", cents=False, currency="RUB"
+        )
+        return s
+
     def get_filters(self):
         """Возвращает словарь вида {тег:функция} для всех фильтров"""
         filters = {
@@ -110,6 +123,7 @@ class CustomFilters:
             "dative": self.dative,
             "noun_plural": self.noun_plural,
             "adj_plural": self.adj_plural,
+            "currency_to_words": self.currency_to_words,
         }
         return filters
 
@@ -190,6 +204,7 @@ if __name__ == "__main__":
     #     "продолжительность": "продолжительность",
     #     "дата_начала": "дата начала",
     #     "должность_заявителя": "должность заявителя",
+    #     "отпускные": "размер отпускных",
     # }
 
     # path = "D:\\Dev\\document-template\\backend\\backend\\core\\"
@@ -214,6 +229,7 @@ if __name__ == "__main__":
     #     "дата_начала": "23.10.2023",
     #     "должность_заявителя": "старший рогополировальщик",
     #     "дата": "16.10.2023",
+    #     "отпускные": 5000,
     # }
 
     # # Генерация документа по заданному контексту значений полей
