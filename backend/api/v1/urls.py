@@ -8,36 +8,36 @@ from api.v1.views import (
     TemplateFieldViewSet,
 )
 
-app_name = 'api'
+app_name = "api"
 
 router_v1 = DefaultRouter()
 
 router_v1.register(
-    prefix='templates',
-    basename='templates',
+    prefix="templates",
+    basename="templates",
     viewset=TemplateViewSet,
 )
 
 router_v1.register(
-    prefix='templates/fields',
-    basename='fields',
+    r"templates/(?P<template_id>[^/.]+)/fields",
+    basename="fields",
     viewset=TemplateFieldViewSet,
 )
 
 router_v1.register(
-    prefix='documents',
-    basename='documents',
+    prefix="documents",
+    basename="documents",
     viewset=DocumentViewSet,
 )
 
 router_v1.register(
-    prefix='documents/fields',
-    basename='fields',
+    prefix="documents/fields",
+    basename="fields",
     viewset=DocumentFieldViewSet,
 )
 
 urlpatterns = [
-    path('', include(router_v1.urls)),
-    path('', include('djoser.urls')),
-    path('auth/', include('djoser.urls.authtoken')),
+    path("", include(router_v1.urls)),
+    path("", include("djoser.urls")),
+    path("auth/", include("djoser.urls.authtoken")),
 ]
