@@ -7,6 +7,7 @@ fiom_results = {
     "fio_title": "Иванов Иван Петрович",
     "genitive": "иванова ивана петровича",
     "dative": "иванову ивану петровичу",
+    "ablt": "ивановым иваном петровичем",
 }
 fiof_fixture = "иванова ирина петровна"
 fiof_results = {
@@ -14,6 +15,7 @@ fiof_results = {
     "fio_title": "Иванова Ирина Петровна",
     "genitive": "ивановой ирины петровны",
     "dative": "ивановой ирине петровне",
+    "ablt": "ивановой ириной петровной",
 }
 adj_fixture = "календарный"
 adj_results = {
@@ -59,6 +61,7 @@ filters_fixture = [
     "fio_title",
     "genitive",
     "dative",
+    "ablt",
     "noun_plural",
     "adj_plural",
     "currency_to_words",
