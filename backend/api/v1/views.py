@@ -143,7 +143,7 @@ class FavTemplateViewSet(viewsets.ModelViewSet):
     @action(
         detail=False,
         methods=('delete',),
-        permission_classes=AllowAny,
+        permission_classes=IsAuthenticated,
         url_path='',
         url_name='favorite-delete',
     )
