@@ -1,5 +1,7 @@
+from rest_framework import filters
 from rest_framework import viewsets, serializers, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from django_filters.rest_framework import DjangoFilterBackend
 from django.http.response import StreamingHttpResponse
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import action
@@ -42,6 +44,15 @@ class TemplateViewSet(viewsets.ModelViewSet):
     )
     permissions_classes = (AllowAny,)
 
+    filter_backends = (
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter
+    )
+    pagination_class = None
+    filterset_fields = ('owner', 'category',)
+    search_fields = ('owner', 'category',)
+
 
 class TemplateFieldViewSet(viewsets.ModelViewSet):
     """ Заглушка. Поле шаблона. """
@@ -67,6 +78,15 @@ class DocumentViewSet(viewsets.ModelViewSet):
         'delete'
     )
     permissions_classes = (AllowAny,)
+
+    filter_backends = (
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter
+    )
+    pagination_class = None
+    filterset_fields = ('user_id',)
+    search_fields = ('user_id',)
 
     @action(
         detail=True,
