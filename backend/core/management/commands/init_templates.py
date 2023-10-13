@@ -8,17 +8,18 @@ from backend.settings import INITIAL_DATA_DIR
 from documents.models import Template, TemplateField
 
 ALREADY_LOADED_MESSAGE: str = """
-Шаблон с именем {} уже существует!
+Шаблон с именем '{}' уже существует!
 Вы можете:
     1) Полностью обновить данные (существующий шаблон и его поля будут удалены)
-    2) Добавить новый шаблон
-иначе) Оставить таблицу без изменения
+    2) Добавить новый шаблон, оставив старый шаблон в базе
+иначе) Оставить таблицу без изменения (не загружать новый файл шаблона)
 Ваш выбор (1 или 2): """
 
-MESSAGE_TEMPLATE_LOAD: str = "Загрузка шаблона {}"
-MESSAGE_TEMPLATE_LOADED: str = "Шаблон {} загружен"
+MESSAGE_TEMPLATE_LOAD: str = "Загрузка шаблона '{}'"
+MESSAGE_TEMPLATE_LOADED: str = "Шаблон '{}' загружен"
 MESSAGE_LOAD_FINISHED: str = "Загрузка завершена. Загружено {} шаблонов."
-MESSAGE_FILE_NOT_FOUND: str = "Файл {} не найден."
+MESSAGE_FILE_NOT_FOUND: str = "Файл '{}' не найден."
+TEMPLATE_LIST_SOURCE_FILE: str = "template_list.json"
 
 
 def load_template(docx_file_name, json_file_name):
@@ -59,19 +60,21 @@ def load_template(docx_file_name, json_file_name):
         return 1
 
 
-template_names = (
-    ("заявление_детсад_tpl.docx", "заявление_детсад_tpl.json"),
-    ("заявление_на_отпуск_tpl.docx", "заявление_на_отпуск_tpl.json"),
-)
-
-
 class Command(BaseCommand):
     help = "Загрузка данных о шаблонах из /data/"
 
     def handle(self, *args, **options):
+        template_dicts = {}
+        with open(
+            os.path.join(INITIAL_DATA_DIR, TEMPLATE_LIST_SOURCE_FILE),
+            "rt",
+            encoding="utf-8",
+        ) as file:
+            template_dicts = json.load(file)
+
         records_loaded = 0
-        for fdocx, fjson in template_names:
-            fdocx = os.path.join(INITIAL_DATA_DIR, fdocx)
-            fjson = os.path.join(INITIAL_DATA_DIR, fjson)
+        for item in template_dicts:
+            fdocx = os.path.join(INITIAL_DATA_DIR, item.get("template"))
+            fjson = os.path.join(INITIAL_DATA_DIR, item.get("fields"))
             records_loaded += load_template(fdocx, fjson)
         print(self.style.SUCCESS(MESSAGE_LOAD_FINISHED.format(records_loaded)))
