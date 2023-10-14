@@ -30,7 +30,12 @@ class CustomFilters:
         skip: bool =True, если фильтр должен быть отключен
         value: значение возвращаемое вместо значения s
         """
-        if not self._enabled or tag is None or not tag or tag in self._skip_filter_tags:
+        if (
+            not self._enabled
+            or tag is None
+            or not tag
+            or tag in self._skip_filter_tags
+        ):
             return True, tag
         return False, tag
 
@@ -154,7 +159,9 @@ class CustomFilters:
 
         if roubles >= 10**14:
             return num
-        s = num2words(roubles, to="currency", lang="ru", cents=False, currency="RUB")
+        s = num2words(
+            roubles, to="currency", lang="ru", cents=False, currency="RUB"
+        )
         return s
 
     def get_filters(self):
