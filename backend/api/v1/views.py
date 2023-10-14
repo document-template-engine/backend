@@ -103,13 +103,13 @@ class DocumentViewSet(viewsets.ModelViewSet):
 
         document = get_object_or_404(Document, id=pk)
         context = dict()
-        field = DocumentField.objects.filter(document_id=pk)
+        field = DocumentField.objects.filter(document=pk)
         serializers =  DocumentFieldSerializer(field, many=True)
         for field in serializers.data:
-            name_field = TemplateField.objects.get(id=field['field_id'])
+            name_field = TemplateField.objects.get(id=field['field'])
             context[str(name_field)] = field['value']
 
-        path = document.template_id.template
+        path = document.template.template
         doc = DocumentTemplate(path)
         buffer = doc.get_draft(context)
 
@@ -117,7 +117,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
             streaming_content=buffer,  
             content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         )
-        name = document.template_id.name
+        name = document.template.name
         response['Content-Disposition'] = f'attachment;filename={name}.docx'
         response["Content-Encoding"] = 'UTF-8'
 

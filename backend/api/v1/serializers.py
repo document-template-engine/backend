@@ -67,7 +67,7 @@ class DocumentReadSerializer(serializers.ModelSerializer):
             'created',
             'completed',
             "description",
-            'template_id',
+            'template',
             'owner',
             'document_fields'
         )
@@ -83,7 +83,7 @@ class DocumentWriteSerializer(serializers.ModelSerializer):
             'created',
             'completed',
             "description",
-            'template_id',
+            'template',
             'document_fields'
         )
     
@@ -93,10 +93,10 @@ class DocumentWriteSerializer(serializers.ModelSerializer):
         document_fields = validated_data.pop("document_fields")
         document = Document.objects.create(**validated_data)
         for data in document_fields:
-            field_id = data['field_id']
-            template = TemplateField.objects.get(id=field_id.id).template_id
-            if document.template_id == template: # Эту проверку надо в валидатор засунуть. Проверяется, принадлежит ли поле выбраному шаблону
-                field = DocumentField.objects.create(field_id=field_id, value=data['value'])
+            field = data['field']
+            template = TemplateField.objects.get(id=field.id).template_id
+            if document.template == template: # Эту проверку надо в валидатор засунуть. Проверяется, принадлежит ли поле выбраному шаблону
+                field = DocumentField.objects.create(field=field, value=data['value'])
                 FieldToDocument.objects.create(fields=field, document=document)            
         return document
 
@@ -108,10 +108,10 @@ class DocumentWriteSerializer(serializers.ModelSerializer):
         document = Document.objects.get(id=instance.id)
         FieldToDocument.objects.filter(document=document).delete()
         for data in document_fields:
-            field_id = data['field_id']
-            template = TemplateField.objects.get(id=field_id.id).template_id
-            if document.template_id == template: # Эту проверку надо в валидатор засунуть. Проверяется, принадлежит ли поле выбраному шаблону
-                field = DocumentField.objects.create(field_id=data['field_id'], value=data['value'])
+            field = data['field']
+            template = TemplateField.objects.get(id=field.id).template
+            if document.template == template: # Эту проверку надо в валидатор засунуть. Проверяется, принадлежит ли поле выбраному шаблону
+                field = DocumentField.objects.create(field=data['field'], value=data['value'])
                 FieldToDocument.objects.create(fields=field, document=document) 
         return instance
 

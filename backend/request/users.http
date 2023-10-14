@@ -1,4 +1,4 @@
-@TOKEN = Token 60a6f9ac85af9da02acbd3cac617178b145a659d
+@TOKEN = Token 77435c1657026635eda41cb962fb9d39d4054e17
 
 ###
 POST http://127.0.0.1:8000/api/users/

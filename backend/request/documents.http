@@ -1,4 +1,4 @@
-@TOKEN = Token 60a6f9ac85af9da02acbd3cac617178b145a659d
+@TOKEN = Token 77435c1657026635eda41cb962fb9d39d4054e17
 
 ###
 GET http://127.0.0.1:8000/api/documents/
@@ -18,16 +18,16 @@ Authorization: {{TOKEN}}
       "created": "2023-10-09T09:28:40.010461Z",
       "completed": true,
       "description": "doc1",
-      "template_id": 1,
+      "template": 1,
       "owner": 1,
       "document_fields": [
         {
           "value": "123",
-          "field_id": 2
+          "field": 2
         },
         {
           "value": "name field",
-          "field_id": 1
+          "field": 1
         }
       ]
 }
@@ -42,20 +42,16 @@ Authorization: {{TOKEN}}
       "created": "2023-10-09T09:28:40.010461Z",
       "completed": false,
       "description": "doc1z111",
-      "template_id": 1,
+      "template": 1,
       "owner": 1,
       "document_fields": [
         {
-          "value": "12111113",
-          "field_id": 3
+          "value": "114423",
+          "field": 2
         },
         {
           "value": "114423",
-          "field_id": 4
-        },
-        {
-          "value": "114423",
-          "field_id": 1
+          "field": 1
         }
       ]
 }

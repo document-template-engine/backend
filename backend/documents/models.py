@@ -62,7 +62,7 @@ class TemplateField(models.Model):
 
 
 class DocumentField(models.Model):
-    field_id = models.ForeignKey(TemplateField, on_delete=models.CASCADE, verbose_name='Поле')
+    field = models.ForeignKey(TemplateField, on_delete=models.CASCADE, verbose_name='Поле')
     value = models.CharField(max_length=255, verbose_name='Содержимое поля')
     description = models.TextField(default='Нет описания',verbose_name='Описание поля')
 
@@ -72,7 +72,7 @@ class DocumentField(models.Model):
 
 
 class Document(models.Model):
-    template_id = models.ForeignKey(Template, on_delete=models.CASCADE, verbose_name='Шаблон')
+    template = models.ForeignKey(Template, on_delete=models.CASCADE, verbose_name='Шаблон')
     owner = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Автор документа')
     created = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
     completed = models.BooleanField(verbose_name='Документ заполнен')
