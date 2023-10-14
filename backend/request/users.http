@@ -1,0 +1,51 @@
+@TOKEN = Token 77435c1657026635eda41cb962fb9d39d4054e17
+
+###
+POST http://127.0.0.1:8000/api/users/
+Content-Type: application/json
+
+{
+    "email": "nik3ox1e21@mail.ru",
+    "username": "nikox1323@mail.ru",
+    "password": "456852Zx",
+    "first_name": "kewk",
+    "last_name": "wsq"
+}
+
+###
+POST http://127.0.0.1:8000/api/auth/token/login/
+Content-Type: application/json
+
+{
+    "email": "nik3ox1e21@mail.ru",
+    "password": "456852Zx"
+}
+
+###
+POST http://127.0.0.1:8000/api/users/set_password/
+Content-Type: application/json
+Authorization: {{TOKEN}}
+
+{
+"new_password": "456852Zxы",
+"current_password": "456852Zx1ы"
+}
+
+###
+GET http://127.0.0.1:8000/api/users/me/ 
+Content-Type: application/json
+Authorization: {{TOKEN}}
+
+{
+}
+
+
+###
+GET http://127.0.0.1:8000/api/users/2/ 
+Content-Type: application/json
+Authorization: {{TOKEN}}
+
+{
+}
+
+

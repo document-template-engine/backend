@@ -3,6 +3,8 @@ from django.contrib import admin
 from . import models
 
 
+admin.site.register(models.FieldToDocument)
+
 @admin.register(models.Category)
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ('id' , 'name')
@@ -27,12 +29,13 @@ class TemplateFieldAdmin(admin.ModelAdmin):
 
 @admin.register(models.Document)
 class DocumentAdmin(admin.ModelAdmin):
-    list_display = ('id', 'template_id', 'user_id', 'created', 'completed', 'description')
-    list_filter = ('template_id', 'user_id', 'completed')
+    list_display = ('id', 'template_id', 'owner', 'created', 'completed', 'description')
+    list_filter = ('template_id', 'owner', 'completed')
     readonly_fields = ('id',)
 
 @admin.register(models.DocumentField)
 class DocumentFieldAdmin(admin.ModelAdmin):
-    list_display = ('id', 'document_id', 'field_id', 'value', 'description')
-    list_filter = ('document_id', 'field_id')
+    list_display = ('id', 'field_id', 'value', 'description')
     readonly_fields = ('id',)
+
+

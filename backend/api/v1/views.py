@@ -7,13 +7,17 @@ from django.shortcuts import get_object_or_404
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from rest_framework import filters, status
+
 from .serializers import (
     TemplateSerializer,
-    DocumentSerializer,
+    DocumentReadSerializer,
+    DocumentWriteSerializer,
     DocumentFieldSerializer,
     CategorySerializer,
     FavDocumentSerializer,
     FavTemplateSerializer
+
 )
 from documents.models import (
     Document,
@@ -70,7 +74,7 @@ class TemplateFieldViewSet(viewsets.ModelViewSet):
 class DocumentViewSet(viewsets.ModelViewSet):
     """ Заглушка. Документ. """
     queryset = Document.objects.all()
-    serializer_class = DocumentSerializer
+    serializer_class = DocumentReadSerializer
     http_method_names = (
         'get',
         'post',
@@ -78,7 +82,6 @@ class DocumentViewSet(viewsets.ModelViewSet):
         'delete'
     )
     permissions_classes = (AllowAny,)
-
     filter_backends = (
         DjangoFilterBackend,
         filters.SearchFilter,
@@ -88,30 +91,65 @@ class DocumentViewSet(viewsets.ModelViewSet):
     filterset_fields = ('user_id',)
     search_fields = ('user_id',)
 
+    def get_serializer_class(self):
+        if self.action in ["list", "retrieve"] and self.request.user.is_authenticated:
+            return DocumentReadSerializer
+        return DocumentWriteSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+    
+    @action(
+        detail=False,
+        permission_classes=[AllowAny, ],
+        url_path=r'draft'
+    )
+    def draft_documents(self, request):
+        """Возвращает список незаконченных документов/черновиков"""
+        user = self.request.user
+        print(user)
+        queryset = Document.objects.filter(completed=False, owner=user)
+        serializer = DocumentReadSerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    @action(
+        detail=False,
+        permission_classes=[AllowAny, ],
+        url_path=r'history'
+    )
+    def history_documents(self, request):
+        """Возвращает список законченных документов/история"""
+        user = self.request.user
+        print(user)
+        queryset = Document.objects.filter(completed=True, owner=user)
+        serializer = DocumentReadSerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
     @action(
         detail=True,
         permission_classes=[AllowAny, ],
         url_path=r'download_document'
     )
     def download_document(self, request, pk=None):
+        """ Пока говно код. Скачивание готового документа"""
 
         document = get_object_or_404(Document, id=pk)
         context = dict()
-        field = DocumentField.objects.filter(document_id=pk)
+        field = DocumentField.objects.filter(document=pk)
         serializers =  DocumentFieldSerializer(field, many=True)
         for field in serializers.data:
-            name_field = TemplateField.objects.get(id=field['field_id'])
+            name_field = TemplateField.objects.get(id=field['field'])
             context[str(name_field)] = field['value']
 
-        path = document.template_id.template
+        path = document.template.template
         doc = DocumentTemplate(path)
         buffer = doc.get_draft(context)
 
         response = StreamingHttpResponse(
-        streaming_content=buffer,  # use the stream's content
-        content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            streaming_content=buffer,  
+            content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         )
-        name = document.template_id.name
+        name = document.template.name
         response['Content-Disposition'] = f'attachment;filename={name}.docx'
         response["Content-Encoding"] = 'UTF-8'
 
@@ -119,9 +157,9 @@ class DocumentViewSet(viewsets.ModelViewSet):
 
 
 class DocumentFieldViewSet(viewsets.ModelViewSet):
-    """ Заглушка. Поле документа. """
+    """ Заглушка. Поле шаблона. """
     queryset = DocumentField.objects.all()
-    serializer_class = DocumentSerializer
+    serializer_class = DocumentFieldSerializer
     http_method_names = (
         'get',
         'post',
