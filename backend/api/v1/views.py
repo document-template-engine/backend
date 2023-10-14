@@ -29,6 +29,7 @@ from documents.models import (
     Template,
     TemplateField,
     FavTemplate,
+    FavDocument,
     Category
 )
 from core.template_render import DocumentTemplate
