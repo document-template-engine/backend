@@ -1,11 +1,12 @@
 import json
 import os
+from typing import Dict, List
 
 from django.core.files import File
 from django.core.management import BaseCommand
 
 from backend.settings import INITIAL_DATA_DIR
-from documents.models import Template, TemplateField
+from documents.models import Template, TemplateField, TemplateFieldGroup
 
 ALREADY_LOADED_MESSAGE: str = """
 Шаблон с именем '{}' уже существует!
@@ -19,7 +20,42 @@ MESSAGE_TEMPLATE_LOAD: str = "Загрузка шаблона '{}'"
 MESSAGE_TEMPLATE_LOADED: str = "Шаблон '{}' загружен"
 MESSAGE_LOAD_FINISHED: str = "Загрузка завершена. Загружено {} шаблонов."
 MESSAGE_FILE_NOT_FOUND: str = "Файл '{}' не найден."
+MESSAGE_UNKNOWN_GROUP_ID: str = "Ошибка: неизвестный идентификатор группы '{}'"
 TEMPLATE_LIST_SOURCE_FILE: str = "template_list.json"
+
+
+def create_field_groups(
+    group_list: List[Dict], template: Template
+) -> Dict[int, TemplateFieldGroup]:
+    """Создание групп из заданного списка."""
+    group_list.sort(key=lambda x: x["id"])
+    group_models = {}
+    for group in group_list:
+        id = group.get("id")
+        name = group.get("name")
+        model = TemplateFieldGroup(name=name, template=template)
+        model.save()
+        group_models[id] = model
+    return group_models
+
+
+def create_template_fields(
+    fields: List[Dict], template: Template, groups: List[Dict]
+):
+    """Создание полей для шаблона."""
+
+    template_fields = []
+    for field in fields:
+        group_id = field.pop("group")
+        group = None
+        if group_id:
+            group = groups.get(group_id)
+            if not group:
+                print(MESSAGE_UNKNOWN_GROUP_ID.format(group_id))
+        template_fields.append(
+            TemplateField(template=template, group=group, **field)
+        )
+    TemplateField.objects.bulk_create(template_fields)
 
 
 def load_template(docx_file_name, json_file_name):
@@ -33,6 +69,7 @@ def load_template(docx_file_name, json_file_name):
     with open(json_file_name, encoding="utf-8") as jsonfile:
         context = json.load(jsonfile)
         fields = context.pop("fields")
+        groups_list = context.pop("groups")
         name = context.get("name")
         new_docx_name = context.pop("template")
         qs = Template.objects.filter(name=name)
@@ -52,10 +89,8 @@ def load_template(docx_file_name, json_file_name):
             print("Error for data {}".format(context))
             print(e)
             return 0
-        template_fields = [
-            TemplateField(template_id=template, **field) for field in fields
-        ]
-        TemplateField.objects.bulk_create(template_fields)
+        field_groups = create_field_groups(groups_list, template)
+        create_template_fields(fields, template, field_groups)
         print(MESSAGE_TEMPLATE_LOADED.format(docx_file_name))
         return 1
 
