@@ -10,8 +10,13 @@ from documents.models import (
     DocumentField,
     Template,
     TemplateField,
+    Documents
     FieldToDocument
-    )
+    FavTemplate,
+    FavDocument,
+    Category,
+)
+
 
 
 class CustomUserSerializer(UserSerializer):
@@ -115,4 +120,24 @@ class DocumentWriteSerializer(serializers.ModelSerializer):
                 FieldToDocument.objects.create(fields=field, document=document) 
         return instance
 
+
+class FavTemplateSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = FavTemplate
+        fields = '__all__'
+
+
+class FavDocumentSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = FavDocument
+        fields = '__all__'
+
+
+class CategorySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Category
+        fields = '__all__'
 
