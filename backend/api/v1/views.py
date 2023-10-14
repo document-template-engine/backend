@@ -260,7 +260,7 @@ class FavDocumentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         document = self.kwargs.get('document')
-        new_queryset = FavTemplate.objects.filter(document=document)
+        new_queryset = FavDocument.objects.filter(document=document)
         return new_queryset
 
     @action(
@@ -276,7 +276,7 @@ class FavDocumentViewSet(viewsets.ModelViewSet):
         document = self.kwargs.get('document')
 
         # проверка, что такой FavTemplate существует в БД
-        queryset = FavTemplate.objects.filter(
+        queryset = FavDocument.objects.filter(
             user=self.request.user, document=document
         )
         if len(queryset) == 0:
@@ -292,7 +292,7 @@ class FavDocumentViewSet(viewsets.ModelViewSet):
         document = get_object_or_404(Document, id=document_id)
 
         # проверка, что такого FavTemplate уже нет в БД
-        queryset = FavTemplate.objects.filter(
+        queryset = FavDocument.objects.filter(
             user=self.request.user, document=document
         )
         if len(queryset) > 0:
