@@ -8,8 +8,11 @@ from documents.models import (
     Document,
     DocumentField,
     Template,
-    TemplateField
-    )
+    TemplateField,
+    FavTemplate,
+    FavDocument,
+    Category,
+)
 
 
 class TemplateSerializer(serializers.ModelSerializer):
@@ -59,3 +62,24 @@ class CustomUserSerializer(UserSerializer):
         user.set_password(password)
         user.save()
         return user
+
+
+class FavTemplateSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = FavTemplate
+        fields = '__all__'
+
+
+class FavDocumentSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = FavDocument
+        fields = '__all__'
+
+
+class CategorySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Category
+        fields = '__all__'
