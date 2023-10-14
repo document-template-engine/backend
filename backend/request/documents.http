@@ -1,0 +1,77 @@
+@TOKEN = Token 60a6f9ac85af9da02acbd3cac617178b145a659d
+
+###
+GET http://127.0.0.1:8000/api/documents/
+Content-Type: application/json
+Authorization: {{TOKEN}}
+
+{
+}
+
+###
+POST http://127.0.0.1:8000/api/documents/
+Content-Type: application/json
+Authorization: {{TOKEN}}
+
+{
+      "id": 1,
+      "created": "2023-10-09T09:28:40.010461Z",
+      "completed": true,
+      "description": "doc1",
+      "template_id": 1,
+      "owner": 1,
+      "document_fields": [
+        {
+          "value": "123",
+          "field_id": 2
+        },
+        {
+          "value": "name field",
+          "field_id": 1
+        }
+      ]
+}
+
+###
+PATCH  http://127.0.0.1:8000/api/documents/1/
+Content-Type: application/json
+Authorization: {{TOKEN}}
+
+{
+      "id": 1,
+      "created": "2023-10-09T09:28:40.010461Z",
+      "completed": false,
+      "description": "doc1z111",
+      "template_id": 1,
+      "owner": 1,
+      "document_fields": [
+        {
+          "value": "12111113",
+          "field_id": 3
+        },
+        {
+          "value": "114423",
+          "field_id": 4
+        },
+        {
+          "value": "114423",
+          "field_id": 1
+        }
+      ]
+}
+
+###
+get  http://127.0.0.1:8000/api/documents/draft/
+Content-Type: application/json
+Authorization: {{TOKEN}}
+
+{
+}
+
+###
+get  http://127.0.0.1:8000/api/documents/history/
+Content-Type: application/json
+Authorization: {{TOKEN}}
+
+{
+}
