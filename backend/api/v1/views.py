@@ -119,8 +119,8 @@ class DocumentViewSet(viewsets.ModelViewSet):
         filters.OrderingFilter
     )
     pagination_class = None
-    filterset_fields = ('user_id',)
-    search_fields = ('user_id',)
+    filterset_fields = ('owner',)
+    search_fields = ('owner',)
 
     def get_serializer_class(self):
         if self.action in ["list", "retrieve"] and self.request.user.is_authenticated:
@@ -225,7 +225,7 @@ class FavTemplateViewSet(viewsets.ModelViewSet):
 
         # проверка, что такой FavTemplate существует в БД
         queryset = FavTemplate.objects.filter(
-            user_id=self.request.user, template=template
+            user=self.request.user, template=template
         )
         if len(queryset) == 0:
             raise serializers.ValidationError(
@@ -241,7 +241,7 @@ class FavTemplateViewSet(viewsets.ModelViewSet):
 
         # проверка, что такого FavTemplate уже нет в БД
         queryset = FavTemplate.objects.filter(
-            user_id=self.request.user, template=template
+            user=self.request.user, template=template
         )
         if len(queryset) > 0:
             raise serializers.ValidationError(
@@ -249,7 +249,7 @@ class FavTemplateViewSet(viewsets.ModelViewSet):
             )
 
         # запись нового объекта FavTemplate
-        serializer.save(user_id=self.request.user, template=template)
+        serializer.save(user=self.request.user, template=template)
 
         return Response(status=status.HTTP_201_CREATED)
 
@@ -277,7 +277,7 @@ class FavDocumentViewSet(viewsets.ModelViewSet):
 
         # проверка, что такой FavTemplate существует в БД
         queryset = FavTemplate.objects.filter(
-            user_id=self.request.user, document=document
+            user=self.request.user, document=document
         )
         if len(queryset) == 0:
             raise serializers.ValidationError(
@@ -293,7 +293,7 @@ class FavDocumentViewSet(viewsets.ModelViewSet):
 
         # проверка, что такого FavTemplate уже нет в БД
         queryset = FavTemplate.objects.filter(
-            user_id=self.request.user, document=document
+            user=self.request.user, document=document
         )
         if len(queryset) > 0:
             raise serializers.ValidationError(
@@ -301,6 +301,6 @@ class FavDocumentViewSet(viewsets.ModelViewSet):
             )
 
         # запись нового объекта FavTemplate
-        serializer.save(user_id=self.request.user, document=document)
+        serializer.save(user=self.request.user, document=document)
 
         return Response(status=status.HTTP_201_CREATED)

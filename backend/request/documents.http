@@ -33,7 +33,7 @@ Authorization: {{TOKEN}}
 }
 
 ###
-PATCH  http://127.0.0.1:8000/api/documents/1/
+PATCH  http://127.0.0.1:8000/api/documents/5/
 Content-Type: application/json
 Authorization: {{TOKEN}}
 

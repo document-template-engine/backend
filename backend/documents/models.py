@@ -70,9 +70,6 @@ class TemplateField(models.Model):
 
 
 class DocumentField(models.Model):
-    document = models.ForeignKey(
-        Document, on_delete=models.CASCADE, verbose_name="Документ"
-    )
     field = models.ForeignKey(
         TemplateField, on_delete=models.CASCADE, verbose_name="Поле"
     )

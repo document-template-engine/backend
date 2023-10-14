@@ -95,6 +95,7 @@ class CustomUserSerializer(UserSerializer):
 
 
 class DocumentFieldSerializer(serializers.ModelSerializer):
+    description = serializers.CharField(required=False, max_length=200)
     """ Сериализатор поля документов. """
     class Meta:
         model = DocumentField
@@ -153,7 +154,7 @@ class DocumentWriteSerializer(serializers.ModelSerializer):
         FieldToDocument.objects.filter(document=document).delete()
         for data in document_fields:
             field = data['field']
-            template = TemplateField.objects.get(id=field.id).template
+            template = TemplateField.objects.get(id=field.id).template_id
             if document.template == template: # Эту проверку надо в валидатор засунуть. Проверяется, принадлежит ли поле выбраному шаблону
                 field = DocumentField.objects.create(field=data['field'], value=data['value'])
                 FieldToDocument.objects.create(fields=field, document=document) 
