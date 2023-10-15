@@ -1,5 +1,8 @@
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.db import models
+
+from core.constants import Messages
 
 User = get_user_model()
 
@@ -105,6 +108,11 @@ class TemplateField(models.Model):
 
     def __str__(self):
         return self.name
+
+    def clean(self):
+        # Запрет назначения группы, привязанной к другому шаблону
+        if self.group and self.group.template != self.template:
+            raise ValidationError(Messages.WRONG_FIELD_AND_GROUP_TEMPLATES)
 
 
 class DocumentField(models.Model):
