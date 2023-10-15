@@ -48,6 +48,14 @@ class Template(models.Model):
     def __str__(self):
         return self.name
 
+    def save(self, *args, **kwargs):
+        if self.pk is not None:
+            old_self = Template.objects.get(pk=self.pk)
+            if old_self.template and self.template != old_self.template:
+                # удаление старого файла шаблона
+                old_self.template.delete(False)
+        return super().save(*args, **kwargs)
+
 
 class TemplateFieldGroup(models.Model):
     template = models.ForeignKey(
