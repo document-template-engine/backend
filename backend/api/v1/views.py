@@ -217,8 +217,14 @@ class DocumentFieldViewSet(viewsets.ModelViewSet):
 
     queryset = DocumentField.objects.all()
     serializer_class = DocumentFieldSerializer
-    http_method_names = ("get", "post", "patch", "delete")
+    http_method_names = ("get",)
     permissions_classes = (AllowAny,)
+    pagination_class = None
+
+    def get_queryset(self):
+        document_id = self.kwargs.get("document_id")
+        document = get_object_or_404(Document, id=document_id)
+        return document.fields.all()
 
 
 class FavTemplateViewSet(viewsets.ModelViewSet):

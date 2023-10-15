@@ -45,7 +45,7 @@ router_v1.register(
 )
 
 router_v1.register(
-    prefix="documents/fields",
+    r"documents/(?P<document_id>[^/.]+)/fields",
     basename="fields",
     viewset=DocumentFieldViewSet,
 )

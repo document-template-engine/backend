@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    'drf_yasg',
     "rest_framework",
     "djoser",
     "rest_framework.authtoken",
@@ -172,4 +173,15 @@ DJOSER = {
         "user_create": "api.v1.serializers.CustomUserSerializer",
         "user": "api.v1.serializers.CustomUserSerializer",
     },
+}
+
+
+SWAGGER_SETTINGS = {
+   'SECURITY_DEFINITIONS': {
+      'Token': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header'
+      }
+   }
 }
