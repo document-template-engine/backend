@@ -77,6 +77,10 @@ jobs:
 #          passphrase: ${{ secrets.PASSWORD }}
           source: "docker-compose.production.yml"
           target: "backend"
+          script: |
+            cd ..
+            cd ..
+
       - name: Executing remote ssh commands to deploy
         uses: appleboy/ssh-action@master
         with:
