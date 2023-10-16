@@ -7,8 +7,6 @@ from django.test import override_settings
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
-# from users.models import User
-
 DEFAULT_NUMBER_OF_USERS = 0
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 

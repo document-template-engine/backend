@@ -1,4 +1,4 @@
-version: '3'
+version: '3.8'
 
 volumes:
   pg_data:
@@ -11,26 +11,34 @@ services:
     env_file: .env
     volumes:
       - pg_data:/var/lib/postgresql/data
+    restart: always
 
   backend:
-    build: ./backend/
+    image: ./backend/
+    command: ["commands/app.sh"]
     env_file: .env
     volumes:
-      - static:/backend_static
+      - static:/app/static/
       - media:/app/media/
+    depends_on:
+      - db
 
   frontend:
-    build: ./frontend/
-    env_file: .env
-    command: cp -r /app/build/. /static/
+    image: documents23/document-template-engine_frontend:latest
     volumes:
-      - static:/static
+      - ./frontend/:/app/result_build/
 
-  gateway:
-    build: ./nginx/
+  nginx:
+    image: nginx:1.22.1
     env_file: .env
     ports:
-      - 8088:80
+      - "8000:80"
     volumes:
-      - static:/staticfiles/
-      - media:/app/media/
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./frontend/build:/usr/share/nginx/html/
+      - ./docs/:/usr/share/nginx/html/api/docs/
+      - static:/var/html/static/
+      - media:/var/html/media/
+    depends_on:
+      - backend
+    restart: always

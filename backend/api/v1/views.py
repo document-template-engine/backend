@@ -1,38 +1,33 @@
-from rest_framework import filters
-from rest_framework import viewsets, serializers, status
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from django_filters.rest_framework import DjangoFilterBackend
 from django.http import FileResponse
-from rest_framework import viewsets
-from rest_framework.permissions import AllowAny
 from django.http.response import StreamingHttpResponse
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, serializers, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from rest_framework import filters, status
-
 from .serializers import (
-    TemplateFieldSerializer,
-    TemplateSerializer,
+    CategorySerializer,
+    DocumentFieldSerializer,
     DocumentReadSerializer,
     DocumentWriteSerializer,
-    DocumentFieldSerializer,
-    CategorySerializer,
     FavDocumentSerializer,
     FavTemplateSerializer,
+    TemplateFieldSerializer,
+    TemplateSerializer,
     TemplateSerializerMinified,
 )
+from core.template_render import DocumentTemplate
 from documents.models import (
+    Category,
     Document,
     DocumentField,
+    FavDocument,
+    FavTemplate,
     Template,
     TemplateField,
-    FavTemplate,
-    FavDocument,
-    Category,
 )
-from core.template_render import DocumentTemplate
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
