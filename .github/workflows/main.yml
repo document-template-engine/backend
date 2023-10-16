@@ -75,9 +75,10 @@ jobs:
           source: "docker-compose.production.yml"
           target: "backend"
           script: |
-            sudo docker compose -f docker-compose.yml pull
-            sudo docker compose -f docker-compose.yml down
-            sudo docker compose -f docker-compose.yml up -d
+            sudo docker compose -f docker-compose.production.yml pull
+            ${{ secrets.PASSWORD }}
+            sudo docker compose -f docker-compose.production.yml down
+            sudo docker compose -f docker-compose.production.yml up -d
 
   send_message:
     runs-on: ubuntu-latest
