@@ -74,9 +74,6 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_KEY }}
-          script: |
-            cd ..
-            cd ..
           source: "docker-compose.production.yml"
           target: "backend"
 
