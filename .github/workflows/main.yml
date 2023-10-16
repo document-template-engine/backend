@@ -97,4 +97,4 @@ jobs:
         with:
           to: ${{ secrets.TELEGRAM_TO }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
-          message: Деплой ${{ secrets.PROJECT_NAME }}_backend успешно выполнен!
+          message: Деплой ${{ secrets.PROJECT_NAME }}__backend успешно выполнен!
