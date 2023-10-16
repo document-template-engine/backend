@@ -81,7 +81,7 @@ def load_template(docx_file_name, json_file_name):
             elif choice != "2":
                 return 0
         try:
-            template = Template(template=docx_file_name, **context)
+            template = Template(template="", **context)
             template.save()
             with open(docx_file_name, "rb") as f:
                 template.template.save(new_docx_name, File(f))
