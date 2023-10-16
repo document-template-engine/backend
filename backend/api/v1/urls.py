@@ -1,14 +1,13 @@
-from django.urls import include, path
-from rest_framework.routers import DefaultRouter
-
 from api.v1.views import (
+    DocumentFieldViewSet,
     DocumentViewSet,
     FavDocumentViewSet,
     FavTemplateViewSet,
-    TemplateViewSet,
-    DocumentFieldViewSet,
     TemplateFieldViewSet,
+    TemplateViewSet,
 )
+from django.urls import include, path
+from rest_framework.routers import DefaultRouter
 
 app_name = "api"
 
