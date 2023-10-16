@@ -65,6 +65,7 @@ filters_fixture = [
     "noun_plural",
     "adj_plural",
     "currency_to_words",
+    "split",
 ]
 
 currency_fixture = {
@@ -79,6 +80,19 @@ currency_fixture = {
     2135: "две тысячи сто тридцать пять рублей, 00 копеек",
     1001000: "один миллион одна тысяча рублей, 00 копеек",
     1000000001: "один миллиард один рубль, 00 копеек",
+}
+
+split_fixture = {
+    ("Иванов Иван, Сидоров Петр", None): [
+        "Иванов",
+        "Иван,",
+        "Сидоров",
+        "Петр",
+    ],
+    ("Иванов Иван, Сидоров Петр", ","): [
+        "Иванов Иван",
+        " Сидоров Петр",
+    ],
 }
 
 
@@ -147,4 +161,14 @@ class Test(TestCase):
                     self.filters.currency_to_words(number),
                     result,
                     "Filter currency_to_words returns unexpected result",
+                )
+
+    def test_split(self):
+        """Проверка фильтра split (разделение строки)"""
+        for (line, sep), result in split_fixture.items():
+            with self.subTest(line=line, sep=sep, result=result):
+                self.assertEqual(
+                    self.filters.split(line, sep),
+                    result,
+                    "Filter split returns unexpected result",
                 )

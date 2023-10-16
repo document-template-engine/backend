@@ -164,6 +164,15 @@ class CustomFilters:
         )
         return s
 
+    def split(self, line: str, sep=None) -> List[str]:
+        """Разбиение строки на части и возвращает в виде списка."""
+        skip, value = self._skip_filter(line)
+        if skip:
+            return [value]
+        if not line or not isinstance(line, str):
+            return line
+        return line.split(sep)
+
     def get_filters(self):
         """Возвращает словарь вида {тег:функция} для всех фильтров"""
         filters = {
@@ -175,6 +184,7 @@ class CustomFilters:
             "noun_plural": self.noun_plural,
             "adj_plural": self.adj_plural,
             "currency_to_words": self.currency_to_words,
+            "split": self.split,
         }
         return filters
 
@@ -184,6 +194,7 @@ class DocumentTemplate:
     TAG_STYLE_NAME: Final = "TemplateTag"
 
     def __init__(self, template_file_name: str):
+        self._tempalte_file_name = template_file_name
         self._template: DocxTemplate = docxtpl.DocxTemplate(template_file_name)
         self._jinja_env = jinja2.Environment()
         self._customfilters = CustomFilters()
@@ -282,6 +293,17 @@ class DocumentTemplate:
                     start_run = r
             else:
                 start_run = None
+
+    def prepare_template(self):
+        """Подгтотовка шаблона к использованию (объединение прогонов)"""
+        self._template.init_docx()
+        docx = self._template.docx
+        tag_style = docx.styles[self.TAG_STYLE_NAME]
+        self._print_document_runs(docx)
+        runs = list(self._docx_runs(docx))
+        # Объединение последовательных прогонов с тэгами в один
+        self._combine_styled_tag_runs(tag_style, runs)
+        docx.save(self._tempalte_file_name)
 
     def _markdown_given_tags(
         self, docx: Document, tags: List[str], color=WD_COLOR_INDEX.YELLOW

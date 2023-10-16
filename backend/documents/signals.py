@@ -6,4 +6,7 @@ from .models import Template
 @receiver(pre_delete, sender=Template)
 def template_model_delete(sender, instance, **kwargs):
     if instance.template:
-        instance.template.delete(False)
+        try:
+            instance.template.delete(False)
+        except Exception as e:
+            print(e)

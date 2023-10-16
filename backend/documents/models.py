@@ -56,7 +56,10 @@ class Template(models.Model):
             old_self = Template.objects.get(pk=self.pk)
             if old_self.template and self.template != old_self.template:
                 # удаление старого файла шаблона
-                old_self.template.delete(False)
+                try:
+                    old_self.template.delete(False)
+                except Exception as e:
+                    print(e)
         return super().save(*args, **kwargs)
 
 

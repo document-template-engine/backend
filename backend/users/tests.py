@@ -19,8 +19,13 @@ class TestAPIRegistrationAndAuthenticationUser(APITestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.client = APIClient()
-        cls.test_user_data = {"email": "user@mail.ru", "password": "qwertyqwerty123"}
-        cls.response_registration = cls.client.post("/api/users/", cls.test_user_data)
+        cls.test_user_data = {
+            "email": "user@mail.ru",
+            "password": "qwertyqwerty123",
+        }
+        cls.response_registration = cls.client.post(
+            "/api/users/", cls.test_user_data
+        )
 
     @classmethod
     def tearDownClass(cls):
