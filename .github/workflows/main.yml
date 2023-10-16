@@ -74,9 +74,8 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_KEY }}
-          run: cd /
           source: "docker-compose.production.yml"
-          target: "backend"
+          target: "/project_document_template"
 
       - name: Executing remote ssh commands to deploy
         uses: appleboy/ssh-action@master
