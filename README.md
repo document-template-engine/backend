@@ -171,7 +171,7 @@ POST  api/v1/auth/token/login/
 GET  api/v1/users/me/
 ```
 
-#### Пример ответа.
+#### Пример ответа
 ```
 {
     "id": 1,
