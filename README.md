@@ -122,7 +122,7 @@ docker compose -f docker-compose.production.yml exec backend python manage.py cr
 sudo nano /etc/nginx/sites-enabled/default
 ```
 
-## Примеры запросов и ответов к API.
+## Примеры запросов и ответов к API
 
 ### Регистрация
 #### Endpoint
