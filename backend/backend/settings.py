@@ -135,7 +135,7 @@ STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "collected_static"
 
 STATICFILES_DIRS = ((BASE_DIR / "static/"),)
-# INITIAL_DATA_DIR = BASE_DIR / "static/data/"
+
 INITIAL_DATA_DIR = BASE_DIR.parent / "data"
 
 MEDIA_URL = "/media/"
@@ -145,6 +145,8 @@ MEDIA_ROOT = "/app/media"
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+AUTH_USER_MODEL = "users.User"
 
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
