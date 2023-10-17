@@ -1,7 +1,8 @@
 @TOKEN = Token b5b767cb36da725f900892f627a28dc1c0e40488
+@URL = https://documents-template.site/
 
 ###
-POST http://127.0.0.1:8000/api/users/
+POST {{URL}}/api/users/
 Content-Type: application/json
 
 {
@@ -13,7 +14,7 @@ Content-Type: application/json
 }
 
 ###
-POST http://127.0.0.1:8000/api/auth/token/login/
+POST {{URL}}/api/auth/token/login/
 Content-Type: application/json
 
 {
@@ -22,7 +23,7 @@ Content-Type: application/json
 }
 
 ###
-POST http://127.0.0.1:8000/api/users/set_password/
+POST {{URL}}/api/users/set_password/
 Content-Type: application/json
 Authorization: {{TOKEN}}
 
@@ -32,7 +33,7 @@ Authorization: {{TOKEN}}
 }
 
 ###
-GET http://127.0.0.1:8000/api/users/me/ 
+GET {{URL}}/api/users/me/ 
 Content-Type: application/json
 Authorization: {{TOKEN}}
 
@@ -41,7 +42,7 @@ Authorization: {{TOKEN}}
 
 
 ###
-GET http://127.0.0.1:8000/api/users/2/ 
+GET {{URL}}/api/users/2/ 
 Content-Type: application/json
 Authorization: {{TOKEN}}
 

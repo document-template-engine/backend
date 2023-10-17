@@ -1,40 +1,8 @@
 @TOKEN = Token 77435c1657026635eda41cb962fb9d39d4054e17
+@URL = https://documents-template.site/
 
-### Все шаблоны
-GET http://127.0.0.1:8000/api/templates/ 
-Content-Type: application/json
-Authorization: {{TOKEN}}
-
-{
-}
-
-### Просмотр одного шаблона
-GET http://127.0.0.1:8000/api/templates/1/ 
-Content-Type: application/json
-Authorization: {{TOKEN}}
-
-{
-}
-
-
-### Просмотр всех полей шаблона
-GET http://127.0.0.1:8000/api/templates/1/fields
-Content-Type: application/json
-Authorization: {{TOKEN}}
-
-{
-}
-
-### Добавить шаблон в избранное
-POST http://127.0.0.1:8000/api/templates/1/favorite/
-Content-Type: application/json
-Authorization: {{TOKEN}}
-
-{
-}
-
-### Удалить шаблон из избранного
-DELETE http://127.0.0.1:8000/api/templates/1/favorite/
+###
+GET {{URL}}/api/documents/
 Content-Type: application/json
 Authorization: {{TOKEN}}
 
@@ -42,15 +10,7 @@ Authorization: {{TOKEN}}
 }
 
 ###
-GET http://127.0.0.1:8000/api/documents/
-Content-Type: application/json
-Authorization: {{TOKEN}}
-
-{
-}
-
-###
-POST http://127.0.0.1:8000/api/documents/
+POST {{URL}}/api/documents/
 Content-Type: application/json
 Authorization: {{TOKEN}}
 
@@ -103,7 +63,7 @@ Authorization: {{TOKEN}}
 }
 
 ###
-PATCH  http://127.0.0.1:8000/api/documents/2/
+PATCH  {{URL}}/api/documents/2/
 Content-Type: application/json
 Authorization: {{TOKEN}}
 
@@ -127,7 +87,7 @@ Authorization: {{TOKEN}}
 }
 
 ###
-get  http://127.0.0.1:8000/api/documents/draft/
+get  {{URL}}/api/documents/draft/
 Content-Type: application/json
 Authorization: {{TOKEN}}
 
@@ -135,7 +95,7 @@ Authorization: {{TOKEN}}
 }
 
 ###
-get  http://127.0.0.1:8000/api/documents/history/
+get  {{URL}}/api/documents/history/
 Content-Type: application/json
 Authorization: {{TOKEN}}
 
@@ -143,7 +103,7 @@ Authorization: {{TOKEN}}
 }
 
 ###
-get  http://127.0.0.1:8000/api/documents/2/download_document/
+get  {{URL}}/api/documents/2/download_document/
 Content-Type: application/json
 Authorization: {{TOKEN}}
 

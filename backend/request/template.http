@@ -1,0 +1,43 @@
+@TOKEN = Token 77435c1657026635eda41cb962fb9d39d4054e17
+@URL = https://documents-template.site/
+
+### Все шаблоны
+GET {{URL}}/api/templates/ 
+Content-Type: application/json
+Authorization: {{TOKEN}}
+
+{
+}
+
+### Просмотр одного шаблона
+GET {{URL}}/api/templates/1/ 
+Content-Type: application/json
+Authorization: {{TOKEN}}
+
+{
+}
+
+
+### Просмотр всех полей шаблона
+GET {{URL}}/api/templates/1/fields
+Content-Type: application/json
+Authorization: {{TOKEN}}
+
+{
+}
+
+### Добавить шаблон в избранное
+POST {{URL}}/api/templates/1/favorite/
+Content-Type: application/json
+Authorization: {{TOKEN}}
+
+{
+}
+
+### Удалить шаблон из избранного
+DELETE {{URL}}/api/templates/1/favorite/
+Content-Type: application/json
+Authorization: {{TOKEN}}
+
+{
+}
