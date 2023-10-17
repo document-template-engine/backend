@@ -1,0 +1,18 @@
+[
+    {
+        "template": "заявление_детсад_tpl.docx",
+        "fields": "заявление_детсад_tpl.json"
+    },
+    {
+        "template": "заявление_на_отпуск_tpl.docx",
+        "fields": "заявление_на_отпуск_tpl.json"
+    },
+    {
+        "template": "претензия_tpl.docx",
+        "fields": "претензия_tpl.json"
+    },
+    {
+        "template": "договор_найма_жилого_помещения_tpl.docx",
+        "fields": "договор_найма_жилого_помещения_tpl.json"
+    }
+]

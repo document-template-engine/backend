@@ -1,0 +1,152 @@
+@TOKEN = Token 77435c1657026635eda41cb962fb9d39d4054e17
+
+### Все шаблоны
+GET http://127.0.0.1:8000/api/templates/ 
+Content-Type: application/json
+Authorization: {{TOKEN}}
+
+{
+}
+
+### Просмотр одного шаблона
+GET http://127.0.0.1:8000/api/templates/1/ 
+Content-Type: application/json
+Authorization: {{TOKEN}}
+
+{
+}
+
+
+### Просмотр всех полей шаблона
+GET http://127.0.0.1:8000/api/templates/1/fields
+Content-Type: application/json
+Authorization: {{TOKEN}}
+
+{
+}
+
+### Добавить шаблон в избранное
+POST http://127.0.0.1:8000/api/templates/1/favorite/
+Content-Type: application/json
+Authorization: {{TOKEN}}
+
+{
+}
+
+### Удалить шаблон из избранного
+DELETE http://127.0.0.1:8000/api/templates/1/favorite/
+Content-Type: application/json
+Authorization: {{TOKEN}}
+
+{
+}
+
+###
+GET http://127.0.0.1:8000/api/documents/
+Content-Type: application/json
+Authorization: {{TOKEN}}
+
+{
+}
+
+###
+POST http://127.0.0.1:8000/api/documents/
+Content-Type: application/json
+Authorization: {{TOKEN}}
+
+{
+      "description": "doc1",
+      "template": 1,
+      "completed": true,
+      "document_fields": [
+        {
+          "value": "66",
+          "field": 1
+        },
+        {
+          "value": "Непоседы",
+          "field": 2
+        },
+        {
+          "value": "Ивановой Ирине Петровне",
+          "field": 3
+        },
+        {
+          "value": "Иванова Ивана Ивановича",
+          "field": 4
+        },
+        {
+          "value": "город, улица, номер квартиры",
+          "field": 5
+        },
+        {
+          "value": "Сидоровым Данилой Игоревичем",
+          "field": 6
+        },
+        {
+          "value": "№3",
+          "field": 7
+        },
+        {
+          "value": "01.11.2023",
+          "field": 8
+        },
+        {
+          "value": "20.11.2023",
+          "field": 9
+        },
+        {
+          "value": "30.10.2023",
+          "field": 10
+        }
+      ]
+}
+
+###
+PATCH  http://127.0.0.1:8000/api/documents/2/
+Content-Type: application/json
+Authorization: {{TOKEN}}
+
+{
+      "id": 1,
+      "created": "2023-10-09T09:28:40.010461Z",
+      "completed": false,
+      "description": "doc1z111",
+      "template": 1,
+      "owner": 1,
+      "document_fields": [
+        {
+          "value": "114423",
+          "field": 2
+        },
+        {
+          "value": "114423",
+          "field": 1
+        }
+      ]
+}
+
+###
+get  http://127.0.0.1:8000/api/documents/draft/
+Content-Type: application/json
+Authorization: {{TOKEN}}
+
+{
+}
+
+###
+get  http://127.0.0.1:8000/api/documents/history/
+Content-Type: application/json
+Authorization: {{TOKEN}}
+
+{
+}
+
+###
+get  http://127.0.0.1:8000/api/documents/2/download_document/
+Content-Type: application/json
+Authorization: {{TOKEN}}
+
+{
+}
+
