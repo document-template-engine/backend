@@ -1,5 +1,4 @@
 from django.http import FileResponse
-from django.http.response import StreamingHttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, serializers, status, viewsets
@@ -18,6 +17,7 @@ from .serializers import (
     TemplateSerializer,
     TemplateSerializerMinified,
 )
+from core.constants import Messages
 from core.template_render import DocumentTemplate
 from documents.models import (
     Category,
@@ -50,9 +50,8 @@ def send_file(filestream, filename: str):
 class TemplateViewSet(viewsets.ModelViewSet):
     """Шаблон."""
 
-    queryset = Template.objects.all()
     serializer_class = TemplateSerializer
-    http_method_names = ("get",)
+    http_method_names = ("get", "delete")
     permissions_classes = (AllowAny,)
     filter_backends = (
         DjangoFilterBackend,
@@ -74,6 +73,12 @@ class TemplateViewSet(viewsets.ModelViewSet):
             return TemplateSerializerMinified
         return TemplateSerializer
 
+    def get_queryset(self):
+        if self.request.user.is_superuser:
+            return Template.objects.all()
+        else:
+            return Template.objects.filter(deleted=False)
+
     @action(
         detail=True,
         permission_classes=(AllowAny,),
@@ -88,6 +93,20 @@ class TemplateViewSet(viewsets.ModelViewSet):
         filename = f"{template.name}_шаблон.docx"
         response = send_file(buffer, filename)
         return response
+
+    def destroy(self, request, *args, **kwargs):
+        user = request.user
+        template = self.get_object()
+        if not (user == template.owner or user.is_superuser):
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        if template.deleted:
+            return Response(
+                Messages.TEMPLATE_ALREADY_DELETED,
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        template.deleted = True
+        template.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class TemplateFieldViewSet(viewsets.ModelViewSet):

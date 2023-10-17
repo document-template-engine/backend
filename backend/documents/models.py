@@ -28,12 +28,14 @@ class Template(models.Model):
         on_delete=models.SET_NULL,
         verbose_name="Автор шаблона",
         null=True,
+        blank=True,
     )
     category = models.ForeignKey(
         Category,
         on_delete=models.SET_NULL,
         verbose_name="Категория",
         null=True,
+        blank=True,
     )
     template = models.FileField(upload_to="templates/")
     name = models.CharField(
@@ -120,7 +122,7 @@ class TemplateField(models.Model):
 
 class DocumentField(models.Model):
     field = models.ForeignKey(
-        TemplateField, on_delete=models.CASCADE, verbose_name="Поле"
+        TemplateField, on_delete=models.PROTECT, verbose_name="Поле"
     )
     value = models.CharField(max_length=255, verbose_name="Содержимое поля")
     description = models.TextField(verbose_name="Описание поля")
@@ -132,7 +134,7 @@ class DocumentField(models.Model):
 
 class Document(models.Model):
     template = models.ForeignKey(
-        Template, on_delete=models.CASCADE, verbose_name="Шаблон"
+        Template, on_delete=models.PROTECT, verbose_name="Шаблон"
     )
     owner = models.ForeignKey(
         User, on_delete=models.CASCADE, verbose_name="Автор документа"
