@@ -2,7 +2,6 @@ from django.contrib import admin
 
 from . import models
 
-
 admin.site.register(models.FieldToDocument)
 
 
@@ -32,13 +31,10 @@ class TemplateFieldInlineAdmin(admin.TabularInline):
     extra = 1
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if db_field.name == "group":
-            template_id = request.resolver_match.kwargs["object_id"]
-            parent_template = models.Template.objects.get(id=template_id)
-            if parent_template:
-                kwargs["queryset"] = models.TemplateFieldGroup.objects.filter(
-                    template=parent_template
-                )
+        if db_field.name == "group" and request._template_instance_:
+            kwargs["queryset"] = models.TemplateFieldGroup.objects.filter(
+                template=request._template_instance_
+            )
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
@@ -55,9 +51,11 @@ class TemplateAdmin(admin.ModelAdmin):
     )
     list_filter = ("owner", "category", "deleted")
     readonly_fields = ("id",)
-    inlines = [
-        TemplateFieldInlineAdmin,
-    ]
+    inlines = (TemplateFieldInlineAdmin,)
+
+    def get_form(self, request, instance=None, **kwargs):
+        request._template_instance_ = instance
+        return super().get_form(request, instance, **kwargs)
 
 
 @admin.register(models.TemplateFieldGroup)
