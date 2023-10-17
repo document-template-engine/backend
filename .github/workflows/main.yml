@@ -3,7 +3,7 @@ name: document-template-engine_backend workflow
 on:
   push:
     branches:
-      - develop
+      - main
 
 jobs:
   backend_tests:
