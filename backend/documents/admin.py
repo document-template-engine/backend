@@ -74,12 +74,15 @@ class TemplateFieldAdmin(admin.ModelAdmin):
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "group":
-            field_id = request.resolver_match.kwargs["object_id"]
-            field = models.TemplateField.objects.get(id=field_id)
-            if field.template:
-                kwargs["queryset"] = models.TemplateFieldGroup.objects.filter(
-                    template=field.template
-                )
+            field_id = request.resolver_match.kwargs.get("object_id")
+            if field_id:
+                field = models.TemplateField.objects.get(id=field_id)
+                if field.template:
+                    kwargs[
+                        "queryset"
+                    ] = models.TemplateFieldGroup.objects.filter(
+                        template=field.template
+                    )
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 

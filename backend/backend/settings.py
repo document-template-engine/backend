@@ -30,7 +30,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    'drf_yasg',
+    "drf_yasg",
     "rest_framework",
     "djoser",
     "rest_framework.authtoken",
@@ -136,7 +136,7 @@ STATIC_ROOT = BASE_DIR / "collected_static"
 
 STATICFILES_DIRS = ((BASE_DIR / "static/"),)
 
-INITIAL_DATA_DIR = BASE_DIR.parent / "data"
+INITIAL_DATA_DIR = BASE_DIR / "data"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = "/app/media"
@@ -179,11 +179,7 @@ DJOSER = {
 
 
 SWAGGER_SETTINGS = {
-   'SECURITY_DEFINITIONS': {
-      'Token': {
-            'type': 'apiKey',
-            'name': 'Authorization',
-            'in': 'header'
-      }
-   }
+    "SECURITY_DEFINITIONS": {
+        "Token": {"type": "apiKey", "name": "Authorization", "in": "header"}
+    }
 }
