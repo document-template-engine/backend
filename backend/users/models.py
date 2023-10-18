@@ -3,10 +3,10 @@ from django.db import models
 
 
 class User(AbstractUser):
-
+    bio = models.TextField("Биография", null=True, blank=True)
     email = models.EmailField(
-        verbose_name="email address",
-        max_length=254, unique=True)
+        verbose_name="email address", max_length=254, unique=True
+    )
 
     class Meta:
         verbose_name = "Пользователь"
