@@ -73,6 +73,12 @@ cd backend
 python manage.py createsuperuser
 ```
 
+### Добавить темлейтов в базу:
+```
+cd backend
+python manage.py init_templates
+```
+
 ## Запуск докер контейнеров на локальной машине:
 
 ### Билдим проект и запускаем:
@@ -116,6 +122,11 @@ docker compose -f docker-compose.production.yml exec backend python manage.py mi
 ### Выполнить миграции:
 ```
 docker compose -f docker-compose.production.yml exec backend python manage.py createsuperuser
+```
+
+### Выполнить миграции:
+```
+sudo docker compose -f docker-compose.production.yml exec backend python manage.py init_templates
 ```
 
 ### Настройки nginx:
