@@ -124,6 +124,11 @@ docker compose -f docker-compose.production.yml exec backend python manage.py mi
 docker compose -f docker-compose.production.yml exec backend python manage.py createsuperuser
 ```
 
+### Выполнить миграции:
+```
+sudo docker compose -f docker-compose.production.yml exec backend python manage.py init_templates
+```
+
 ### Настройки nginx:
 ```
 sudo nano /etc/nginx/sites-enabled/default
