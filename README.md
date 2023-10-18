@@ -73,6 +73,12 @@ cd backend
 python manage.py createsuperuser
 ```
 
+### Добавить темлейтов в базу:
+```
+cd backend
+python manage.py init_templates
+```
+
 ## Запуск докер контейнеров на локальной машине:
 
 ### Билдим проект и запускаем:
