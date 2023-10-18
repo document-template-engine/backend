@@ -93,11 +93,12 @@ class DocumentAdmin(admin.ModelAdmin):
         "template",
         "owner",
         "created",
+        "updated",
         "completed",
         "description",
     )
     list_filter = ("template", "owner", "completed")
-    readonly_fields = ("id",)
+    readonly_fields = ("id", "created", "updated")
 
 
 @admin.register(models.DocumentField)
