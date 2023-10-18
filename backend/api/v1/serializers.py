@@ -89,10 +89,16 @@ class CustomUserSerializer(UserSerializer):
     def create(self, validated_data):
         email = validated_data.get("email")
         password = validated_data.get("password")
-        user = User(email=email)
+        username = email
+        user = User(email=email, username=username)
         user.set_password(password)
         user.save()
         return user
+    
+    def validate(self, data):
+        if User.objects.filter(email=data["email"]):
+            raise serializers.ValidationError("Такой email уже есть!")
+        return data
 
 
 class DocumentFieldSerializer(serializers.ModelSerializer):
