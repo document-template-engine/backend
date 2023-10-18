@@ -1,4 +1,4 @@
-from typing import Dict, List
+"""Сериализаторы для API."""
 
 from django.contrib.auth import get_user_model
 from django.db import transaction

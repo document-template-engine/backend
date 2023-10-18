@@ -6,7 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from .serializers import (
+from api.v1.serializers import (
     CategorySerializer,
     DocumentFieldSerializer,
     DocumentReadSerializer,
@@ -183,7 +183,6 @@ class DocumentViewSet(viewsets.ModelViewSet):
     def history_documents(self, request):
         """Возвращает список законченных документов/история"""
         user = self.request.user
-        print(user)
         queryset = Document.objects.filter(completed=True, owner=user)
         serializer = DocumentReadSerializer(
             queryset, many=True, context={"request": request}
