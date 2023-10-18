@@ -116,6 +116,7 @@ class DocumentReadSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "created",
+            "updated",
             "completed",
             "description",
             "template",

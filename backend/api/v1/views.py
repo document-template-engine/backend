@@ -126,7 +126,6 @@ class TemplateFieldViewSet(viewsets.ModelViewSet):
 class DocumentViewSet(viewsets.ModelViewSet):
     """Заглушка. Документ."""
 
-    queryset = Document.objects.all()
     serializer_class = DocumentReadSerializer
     http_method_names = ("get", "post", "patch", "delete")
     permissions_classes = (AllowAny,)
@@ -139,10 +138,17 @@ class DocumentViewSet(viewsets.ModelViewSet):
     filterset_fields = ("owner",)
     search_fields = ("owner",)
 
+    def get_queryset(self):
+        """Выдаем только список документов текущего пользователя."""
+        if self.request.user.is_authenticated:
+            return self.request.user.documents
+        return None
+
     def get_serializer_class(self):
+        """Выбор сериализатора."""
         if (
             self.action in ["list", "retrieve"]
-            and self.request.user.is_authenticated
+                and self.request.user.is_authenticated
         ):
             return DocumentReadSerializer
         return DocumentWriteSerializer
