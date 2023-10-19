@@ -344,7 +344,7 @@ class FavTemplateAPIview(APIView):
             template=self.kwargs.get("template_id")
         )
         # проверка, что такого FavTemplate нет в БД
-        if len(queryset) > 0:
+        if queryset.exists():
             raise serializers.ValidationError(
                 "Этот шаблон уже есть в Избранном!"
             )
@@ -359,7 +359,7 @@ class FavTemplateAPIview(APIView):
             template=self.kwargs.get("template_id")
         )
         # проверка, что такой FavTemplate существует в БД
-        if len(queryset) == 0:
+        if not queryset.exists():
             raise serializers.ValidationError(
                 "Этот шаблон отсутствует в Избранном!"
             )
@@ -379,7 +379,7 @@ class FavDocumentAPIview(APIView):
             document=self.kwargs.get("document_id")
         )
         # проверка, что такого FavDocument нет в БД
-        if len(queryset) > 0:
+        if queryset.exists():
             raise serializers.ValidationError(
                 "Этот документ уже есть в Избранном!"
             )
@@ -394,7 +394,7 @@ class FavDocumentAPIview(APIView):
             document=self.kwargs.get("document_id")
         )
         # проверка, что такой FavDocument существует в БД
-        if len(queryset) == 0:
+        if not queryset.exists():
             raise serializers.ValidationError(
                 "Этот документ отсутствует в Избранном!"
             )
