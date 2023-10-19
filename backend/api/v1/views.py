@@ -5,6 +5,7 @@ from rest_framework import filters, serializers, status, views, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .permissions import IsOwnerOrAdminOrReadOnly
 from .serializers import (
@@ -150,6 +151,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         """Выбор сериализатора."""
         if self.action in ["list", "retrieve"]:
+
             return DocumentReadSerializer
         return DocumentWriteSerializer
 
@@ -315,7 +317,7 @@ class FavDocumentViewSet(viewsets.ModelViewSet):
         document_id = self.kwargs.get("document")
         document = get_object_or_404(Document, id=document_id)
 
-        # проверка, что такого FavTemplate уже нет в БД
+        # проверка, что такого Fav уже нет в БД
         queryset = FavDocument.objects.filter(
             user=self.request.user, document=document
         )
@@ -324,12 +326,82 @@ class FavDocumentViewSet(viewsets.ModelViewSet):
                 "Этот документ уже есть в Избранном!"
             )
 
-        # запись нового объекта FavTemplate
+        # запись нового объекта Fav
         serializer.save(user=self.request.user, document=document)
 
         return Response(status=status.HTTP_201_CREATED)
 
 
+class FavTemplateAPIview(APIView):
+    def post(self, request, **kwargs):
+        data = {
+            "user": self.request.user.pk,
+            "template": self.kwargs.get("template_id")
+        }
+        serializer = FavTemplateSerializer(data=data)
+        queryset = FavTemplate.objects.filter(
+            user=self.request.user.pk,
+            template=self.kwargs.get("template_id")
+        )
+        # проверка, что такого FavTemplate нет в БД
+        if len(queryset) > 0:
+            raise serializers.ValidationError(
+                "Этот шаблон уже есть в Избранном!"
+            )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, **kwargs):
+        queryset = FavTemplate.objects.filter(
+            user=self.request.user.pk,
+            template=self.kwargs.get("template_id")
+        )
+        # проверка, что такой FavTemplate существует в БД
+        if len(queryset) == 0:
+            raise serializers.ValidationError(
+                "Этот шаблон отсутствует в Избранном!"
+            )
+        queryset.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class FavDocumentAPIview(APIView):
+    def post(self, request, **kwargs):
+        data = {
+            "user": self.request.user.pk,
+            "document": self.kwargs.get("document_id")
+        }
+        serializer = FavDocumentSerializer(data=data)
+        queryset = FavDocument.objects.filter(
+            user=self.request.user.pk,
+            document=self.kwargs.get("document_id")
+        )
+        # проверка, что такого FavDocument нет в БД
+        if len(queryset) > 0:
+            raise serializers.ValidationError(
+                "Этот документ уже есть в Избранном!"
+            )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, **kwargs):
+        queryset = FavDocument.objects.filter(
+            user=self.request.user.pk,
+            document=self.kwargs.get("document_id")
+        )
+        # проверка, что такой FavDocument существует в БД
+        if len(queryset) == 0:
+            raise serializers.ValidationError(
+                "Этот документ отсутствует в Избранном!"
+            )
+        queryset.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+      
 class AnonymousDownloadPreviewAPIView(views.APIView):
     permission_classes = (AllowAny,)
 
