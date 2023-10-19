@@ -15,7 +15,7 @@ class IsSuperUserOrReadOnly(permissions.BasePermission):
 
 
 class IsOwnerOrAdminOrReadOnly(permissions.BasePermission):
-    """Доступ: Владелец/админ."""
+    """Доступ: Владелец/админ или только для чтения"""
 
     def has_permission(self, request, view):
         """Видеть список могут все, добавлять только авторизованные."""
@@ -26,15 +26,4 @@ class IsOwnerOrAdminOrReadOnly(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
         """Под объектом подразумевается Template или Document."""
-        return (
-            obj.owner == request.user
-            or request.user.is_superuser
-        )
-
-
-class IsAuthenticated(permissions.BasePermission):
-    """Доступ: только авторизированный пользователь."""
-
-    def has_permission(self, request, view):
-        """Выдача прав на уровне списка."""
-        return request.user.is_authenticated
+        return obj.owner == request.user or request.user.is_superuser
