@@ -12,5 +12,6 @@ class Messages:
     WRONG_FIELD_AND_GROUP_TEMPLATES = (
         "Объект шаблон для поля и группы не совпадают"
     )
+    WRONG_TEMPLATE_FIELD = "Идентификатор поля {} не соответствует шаблону"
 
     TEMPLATE_ALREADY_DELETED = "Шаблон уже удален ранее"
