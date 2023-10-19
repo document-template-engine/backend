@@ -3,6 +3,7 @@ from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, serializers, status, views, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -151,7 +152,6 @@ class DocumentViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         """Выбор сериализатора."""
         if self.action in ["list", "retrieve"]:
-
             return DocumentReadSerializer
         return DocumentWriteSerializer
 
@@ -215,17 +215,21 @@ class DocumentViewSet(viewsets.ModelViewSet):
 
 
 class DocumentFieldViewSet(viewsets.ModelViewSet):
-    """Заглушка. Поле шаблона."""
+    """Поле шаблона."""
 
-    queryset = DocumentField.objects.all()
     serializer_class = DocumentFieldSerializer
     http_method_names = ("get",)
-    permissions_classes = (IsOwnerOrAdminOrReadOnly,)
+    permissions_classes = (IsAuthenticated,)
     pagination_class = None
 
     def get_queryset(self):
         document_id = self.kwargs.get("document_id")
         document = get_object_or_404(Document, id=document_id)
+        if (
+            not (self.request.user.is_authenticated)
+            or document.owner != self.request.user
+        ):
+            raise PermissionDenied()
         through_set = FieldToDocument.objects.filter(document=document).all()
         return DocumentField.objects.filter(fieldtodocument__in=through_set)
 
@@ -234,12 +238,11 @@ class FavTemplateAPIview(APIView):
     def post(self, request, **kwargs):
         data = {
             "user": self.request.user.pk,
-            "template": self.kwargs.get("template_id")
+            "template": self.kwargs.get("template_id"),
         }
         serializer = FavTemplateSerializer(data=data)
         queryset = FavTemplate.objects.filter(
-            user=self.request.user.pk,
-            template=self.kwargs.get("template_id")
+            user=self.request.user.pk, template=self.kwargs.get("template_id")
         )
         # проверка, что такого FavTemplate нет в БД
         if queryset.exists():
@@ -253,8 +256,7 @@ class FavTemplateAPIview(APIView):
 
     def delete(self, request, **kwargs):
         queryset = FavTemplate.objects.filter(
-            user=self.request.user.pk,
-            template=self.kwargs.get("template_id")
+            user=self.request.user.pk, template=self.kwargs.get("template_id")
         )
         # проверка, что такой FavTemplate существует в БД
         if not queryset.exists():
@@ -269,12 +271,11 @@ class FavDocumentAPIview(APIView):
     def post(self, request, **kwargs):
         data = {
             "user": self.request.user.pk,
-            "document": self.kwargs.get("document_id")
+            "document": self.kwargs.get("document_id"),
         }
         serializer = FavDocumentSerializer(data=data)
         queryset = FavDocument.objects.filter(
-            user=self.request.user.pk,
-            document=self.kwargs.get("document_id")
+            user=self.request.user.pk, document=self.kwargs.get("document_id")
         )
         # проверка, что такого FavDocument нет в БД
         if queryset.exists():
@@ -288,8 +289,7 @@ class FavDocumentAPIview(APIView):
 
     def delete(self, request, **kwargs):
         queryset = FavDocument.objects.filter(
-            user=self.request.user.pk,
-            document=self.kwargs.get("document_id")
+            user=self.request.user.pk, document=self.kwargs.get("document_id")
         )
         # проверка, что такой FavDocument существует в БД
         if not queryset.exists():
@@ -299,7 +299,7 @@ class FavDocumentAPIview(APIView):
         queryset.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-      
+
 class AnonymousDownloadPreviewAPIView(views.APIView):
     permission_classes = (AllowAny,)
 
