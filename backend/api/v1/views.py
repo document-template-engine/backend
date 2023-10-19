@@ -352,8 +352,8 @@ class FavDocumentViewSet(viewsets.ModelViewSet):
 class FavTemplateAPIview(APIView):
     def post(self, request, **kwargs):
         data = {
-            'user': self.request.user.pk,
-            'template': self.kwargs.get("template_id")
+            "user": self.request.user.pk,
+            "template": self.kwargs.get("template_id")
         }
         serializer = FavTemplateSerializer(data=data)
         queryset = FavTemplate.objects.filter(
@@ -363,7 +363,7 @@ class FavTemplateAPIview(APIView):
         # проверка, что такого FavTemplate нет в БД
         if len(queryset) > 0:
             raise serializers.ValidationError(
-                "Этот документ уже есть в Избранном!"
+                "Этот шаблон уже есть в Избранном!"
             )
         if serializer.is_valid():
             serializer.save()
@@ -376,6 +376,41 @@ class FavTemplateAPIview(APIView):
             template=self.kwargs.get("template_id")
         )
         # проверка, что такой FavTemplate существует в БД
+        if len(queryset) == 0:
+            raise serializers.ValidationError(
+                "Этот шаблон отсутствует в Избранном!"
+            )
+        queryset.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class FavDocumentAPIview(APIView):
+    def post(self, request, **kwargs):
+        data = {
+            "user": self.request.user.pk,
+            "document": self.kwargs.get("document_id")
+        }
+        serializer = FavDocumentSerializer(data=data)
+        queryset = FavDocument.objects.filter(
+            user=self.request.user.pk,
+            document=self.kwargs.get("document_id")
+        )
+        # проверка, что такого FavDocument нет в БД
+        if len(queryset) > 0:
+            raise serializers.ValidationError(
+                "Этот документ уже есть в Избранном!"
+            )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, **kwargs):
+        queryset = FavDocument.objects.filter(
+            user=self.request.user.pk,
+            document=self.kwargs.get("document_id")
+        )
+        # проверка, что такой FavDocument существует в БД
         if len(queryset) == 0:
             raise serializers.ValidationError(
                 "Этот документ отсутствует в Избранном!"

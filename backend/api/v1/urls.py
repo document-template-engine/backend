@@ -4,7 +4,9 @@ from api.v1.views import (
     FavDocumentViewSet,
     FavTemplateViewSet,
     TemplateFieldViewSet,
-    TemplateViewSet, FavTemplateAPIview,
+    TemplateViewSet,
+    FavTemplateAPIview,
+    FavDocumentAPIview,
 )
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
@@ -31,11 +33,11 @@ router_v1.register(
 #     viewset=FavTemplateViewSet,
 # )
 
-router_v1.register(
-    r"documents/(?P<document_id>[^/.]+)/favorite",
-    basename="document_favorites",
-    viewset=FavDocumentViewSet,
-)
+# router_v1.register(
+#     r"documents/(?P<document_id>[^/.]+)/favorite",
+#     basename="document_favorites",
+#     viewset=FavDocumentViewSet,
+# )
 
 router_v1.register(
     prefix="documents",
@@ -51,6 +53,7 @@ router_v1.register(
 
 urlpatterns = [
     path("templates/<int:template_id>/favorite/", FavTemplateAPIview.as_view()),
+    path("documents/<int:document_id>/favorite/", FavDocumentAPIview.as_view()),
     path("", include(router_v1.urls)),
     path("", include("djoser.urls")),
     path("auth/", include("djoser.urls.authtoken")),
