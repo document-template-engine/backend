@@ -14,7 +14,7 @@ services:
     restart: always
 
   backend:
-    image: ./backend/
+    build: ./backend/
     command: ["commands/app.sh"]
     env_file: .env
     volumes:
@@ -29,7 +29,7 @@ services:
       - ./frontend/:/app/result_build/
 
   nginx:
-    image: nginx:1.22.1
+    build: ./nginx/
     env_file: .env
     ports:
       - "8000:80"

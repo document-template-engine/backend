@@ -1,5 +1,6 @@
 @TOKEN = Token 77435c1657026635eda41cb962fb9d39d4054e17
-@URL = https://documents-template.site/
+# @URL = https://documents-template.site/
+@URL = http://localhost:8000/
 
 ### Все шаблоны
 GET {{URL}}/api/templates/ 
@@ -40,4 +41,59 @@ Content-Type: application/json
 Authorization: {{TOKEN}}
 
 {
+}
+
+### Удалить шаблон из избранного
+DELETE {{URL}}/api/templates/1/favorite/
+Content-Type: application/json
+Authorization: {{TOKEN}}
+
+{
+}
+
+
+### Получить первью документа от анонимного пользователя
+POST {{URL}}/api/templates/1/download_preview/
+Content-Type: application/json
+# Authorization: {{TOKEN}}
+
+{
+    "document_fields": [
+        {
+          "value": "66 Непоседы",
+          "field": 1
+        },
+        {
+          "value": "Ивановой Ирине Петровне",
+          "field": 2
+        },
+        {
+          "value": "Сидорова Петра Ивановича",
+          "field": 3
+        },
+        {
+          "value": "Москва, ул. Центральная, дом 11, кв. 323",
+          "field": 4
+        },
+        {
+          "value": "Сидоровым Данилой Петровичем",
+          "field": 5
+        },
+        {
+          "value": "№3",
+          "field": 6
+        },
+        {
+          "value": "1.11.2023",
+          "field": 7
+        },
+        {
+          "value": "20.11.2023",
+          "field": 8
+        },
+        {
+          "value": "30.10.2023",
+          "field": 9
+        }
+    ]
 }

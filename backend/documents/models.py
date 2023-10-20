@@ -125,7 +125,9 @@ class DocumentField(models.Model):
         TemplateField, on_delete=models.PROTECT, verbose_name="Поле"
     )
     value = models.CharField(max_length=255, verbose_name="Содержимое поля")
-    description = models.TextField(verbose_name="Описание поля")
+    description = models.TextField(
+        verbose_name="Описание поля", blank=True, null=True
+    )
 
     class Meta:
         verbose_name = "Поле документа"
@@ -133,14 +135,23 @@ class DocumentField(models.Model):
 
 
 class Document(models.Model):
+    """Документ."""
+
     template = models.ForeignKey(
         Template, on_delete=models.PROTECT, verbose_name="Шаблон"
     )
     owner = models.ForeignKey(
-        User, on_delete=models.CASCADE, verbose_name="Автор документа"
+        User,
+        on_delete=models.CASCADE,
+        verbose_name="Автор документа",
+        null=True,
+        blank=True,
     )
     created = models.DateTimeField(
         auto_now_add=True, verbose_name="Дата создания"
+    )
+    updated = models.DateTimeField(
+        auto_now=True, verbose_name="Дата изменения"
     )
     completed = models.BooleanField(verbose_name="Документ заполнен")
     description = models.TextField(verbose_name="Описание документа")
@@ -152,6 +163,11 @@ class Document(models.Model):
         verbose_name = "Документ"
         verbose_name_plural = "Документы"
         ordering = ("created",)
+        default_related_name = "documents"
+
+    def __str__(self):
+        """Автор документа и название шаблона."""
+        return f"{self.owner} {self.template}"
 
 
 class FieldToDocument(models.Model):

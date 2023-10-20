@@ -1,13 +1,17 @@
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, serializers, status, viewsets
+from rest_framework import filters, serializers, status, views, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
+from .permissions import IsOwnerOrAdminOrReadOnly
 from .serializers import (
     CategorySerializer,
+    DocumentFieldForPreviewSerializer,
     DocumentFieldSerializer,
     DocumentReadSerializer,
     DocumentWriteSerializer,
@@ -25,8 +29,8 @@ from documents.models import (
     DocumentField,
     FavDocument,
     FavTemplate,
+    FieldToDocument,
     Template,
-    TemplateField,
 )
 
 
@@ -124,26 +128,30 @@ class TemplateFieldViewSet(viewsets.ModelViewSet):
 
 
 class DocumentViewSet(viewsets.ModelViewSet):
-    """Заглушка. Документ."""
+    """Документ."""
 
     queryset = Document.objects.all()
     serializer_class = DocumentReadSerializer
     http_method_names = ("get", "post", "patch", "delete")
-    permissions_classes = (AllowAny,)
+    permissions_classes = (IsAuthenticated,)
     filter_backends = (
-        DjangoFilterBackend,
         filters.SearchFilter,
         filters.OrderingFilter,
+        DjangoFilterBackend,
     )
     pagination_class = None
     filterset_fields = ("owner",)
     search_fields = ("owner",)
 
+    def get_queryset(self):
+        """Выдаем только список документов текущего пользователя."""
+        if self.request.user.is_authenticated:
+            return self.request.user.documents
+        return Document.objects.none()
+
     def get_serializer_class(self):
-        if (
-            self.action in ["list", "retrieve"]
-            and self.request.user.is_authenticated
-        ):
+        """Выбор сериализатора."""
+        if self.action in ["list", "retrieve"]:
             return DocumentReadSerializer
         return DocumentWriteSerializer
 
@@ -153,14 +161,13 @@ class DocumentViewSet(viewsets.ModelViewSet):
     @action(
         detail=False,
         permission_classes=[
-            AllowAny,
+            IsAuthenticated,
         ],
         url_path=r"draft",
     )
     def draft_documents(self, request):
         """Возвращает список незаконченных документов/черновиков"""
         user = self.request.user
-        print(user)
         queryset = Document.objects.filter(completed=False, owner=user)
         serializer = DocumentReadSerializer(
             queryset, many=True, context={"request": request}
@@ -170,14 +177,13 @@ class DocumentViewSet(viewsets.ModelViewSet):
     @action(
         detail=False,
         permission_classes=[
-            AllowAny,
+            IsAuthenticated,
         ],
         url_path=r"history",
     )
     def history_documents(self, request):
         """Возвращает список законченных документов/история"""
         user = self.request.user
-        print(user)
         queryset = Document.objects.filter(completed=True, owner=user)
         serializer = DocumentReadSerializer(
             queryset, many=True, context={"request": request}
@@ -186,86 +192,73 @@ class DocumentViewSet(viewsets.ModelViewSet):
 
     @action(
         detail=True,
-        permission_classes=[
-            AllowAny,
-        ],
+        permission_classes=[IsAuthenticated],
         url_path=r"download_document",
     )
     def download_document(self, request, pk=None):
-        """Пока говно код. Скачивание готового документа"""
+        """Скачивание готового документа"""
 
         document = get_object_or_404(Document, id=pk)
         context = dict()
-        # field = DocumentField.objects.filter(document=pk)
-        # serializers = DocumentFieldSerializer(field, many=True)
-        serializers = DocumentFieldSerializer(
-            document.document_fields, many=True
-        )
-        for field in serializers.data:
-            template_field = TemplateField.objects.get(id=field["field"])
-            context[template_field.tag] = field["value"]
+        for docfield in FieldToDocument.objects.filter(document=document):
+            template_field = docfield.fields.field
+            context[template_field.tag] = docfield.fields.value
         context_default = {
             field.tag: field.name for field in document.template.fields.all()
         }
 
         path = document.template.template
         doc = DocumentTemplate(path)
-        print(context)
-        print(context_default)
         buffer = doc.get_partial(context, context_default)
-
-        # response = StreamingHttpResponse(
-        #     streaming_content=buffer,
-        #     content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        # )
-        # name = document.template.name
-        # response["Content-Disposition"] = f"attachment;filename={name}.docx"
-        # response["Content-Encoding"] = "UTF-8"
         response = send_file(buffer, f"{document.template.name}.docx")
-
         return response
 
 
 class DocumentFieldViewSet(viewsets.ModelViewSet):
-    """Заглушка. Поле шаблона."""
+    """Поле шаблона."""
 
-    queryset = DocumentField.objects.all()
     serializer_class = DocumentFieldSerializer
     http_method_names = ("get",)
-    permissions_classes = (AllowAny,)
+    permissions_classes = (IsAuthenticated,)
     pagination_class = None
 
     def get_queryset(self):
         document_id = self.kwargs.get("document_id")
         document = get_object_or_404(Document, id=document_id)
-        return document.fields.all()
+        if (
+            not (self.request.user.is_authenticated)
+            or document.owner != self.request.user
+        ):
+            raise PermissionDenied()
+        through_set = FieldToDocument.objects.filter(document=document).all()
+        return DocumentField.objects.filter(fieldtodocument__in=through_set)
 
 
-class FavTemplateViewSet(viewsets.ModelViewSet):
-    http_method_names = ["post", "delete"]
-    serializer_class = FavTemplateSerializer
-
-    def get_queryset(self):
-        template_id = self.kwargs.get("template_id")
-        new_queryset = FavTemplate.objects.filter(template=template_id)
-        return new_queryset
-
-    @action(
-        detail=False,
-        methods=("delete",),
-        permission_classes=IsAuthenticated,
-        url_path="",
-        url_name="favorite-delete",
-    )
-    def delete(self, request, *args, **kwargs):
-        # стандартный viewset разрешает метод delete только на something/id/
-        # поэтому если /something/something_else/, придётся @action писать
-        template_id = self.kwargs.get("template_id")
-
-        # проверка, что такой FavTemplate существует в БД
+class FavTemplateAPIview(APIView):
+    def post(self, request, **kwargs):
+        data = {
+            "user": self.request.user.pk,
+            "template": self.kwargs.get("template_id"),
+        }
+        serializer = FavTemplateSerializer(data=data)
         queryset = FavTemplate.objects.filter(
-            user=self.request.user, template=template_id
+            user=self.request.user.pk, template=self.kwargs.get("template_id")
         )
+        # проверка, что такого FavTemplate нет в БД
+        if queryset.exists():
+            raise serializers.ValidationError(
+                "Этот шаблон уже есть в Избранном!"
+            )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, **kwargs):
+        queryset = FavTemplate.objects.filter(
+            user=self.request.user.pk, template=self.kwargs.get("template_id")
+        )
+        # проверка, что такой FavTemplate существует в БД
         if not queryset.exists():
             raise serializers.ValidationError(
                 "Этот шаблон отсутствует в Избранном!"
@@ -273,50 +266,32 @@ class FavTemplateViewSet(viewsets.ModelViewSet):
         queryset.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    def perform_create(self, serializer):
-        template_id = self.kwargs.get("template_id")
-        template = get_object_or_404(Template, id=template_id)
 
-        # проверка, что такого FavTemplate уже нет в БД
-        queryset = FavTemplate.objects.filter(
-            user=self.request.user, template=template
+class FavDocumentAPIview(APIView):
+    def post(self, request, **kwargs):
+        data = {
+            "user": self.request.user.pk,
+            "document": self.kwargs.get("document_id"),
+        }
+        serializer = FavDocumentSerializer(data=data)
+        queryset = FavDocument.objects.filter(
+            user=self.request.user.pk, document=self.kwargs.get("document_id")
         )
+        # проверка, что такого FavDocument нет в БД
         if queryset.exists():
             raise serializers.ValidationError(
-                "Этот шаблон уже есть в Избранном!"
+                "Этот документ уже есть в Избранном!"
             )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        # запись нового объекта FavTemplate
-        serializer.save(user=self.request.user, template=template)
-
-        return Response(status=status.HTTP_201_CREATED)
-
-
-class FavDocumentViewSet(viewsets.ModelViewSet):
-    http_method_names = ["post", "delete"]
-    serializer_class = FavDocumentSerializer
-
-    def get_queryset(self):
-        document_id = self.kwargs.get("document_id")
-        new_queryset = FavDocument.objects.filter(document=document_id)
-        return new_queryset
-
-    @action(
-        detail=False,
-        methods=("delete",),
-        permission_classes=IsAuthenticated,
-        url_path="",
-        url_name="favorite-delete",
-    )
-    def delete(self, request, *args, **kwargs):
-        # стандартный viewset разрешает метод delete только на something/id/
-        # поэтому если /something/something_else/, придётся @action писать
-        document = self.kwargs.get("document")
-
-        # проверка, что такой FavTemplate существует в БД
+    def delete(self, request, **kwargs):
         queryset = FavDocument.objects.filter(
-            user=self.request.user, document=document
+            user=self.request.user.pk, document=self.kwargs.get("document_id")
         )
+        # проверка, что такой FavDocument существует в БД
         if not queryset.exists():
             raise serializers.ValidationError(
                 "Этот документ отсутствует в Избранном!"
@@ -324,20 +299,27 @@ class FavDocumentViewSet(viewsets.ModelViewSet):
         queryset.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    def perform_create(self, serializer):
-        document_id = self.kwargs.get("document")
-        document = get_object_or_404(Document, id=document_id)
 
-        # проверка, что такого FavTemplate уже нет в БД
-        queryset = FavDocument.objects.filter(
-            user=self.request.user, document=document
+class AnonymousDownloadPreviewAPIView(views.APIView):
+    permission_classes = (AllowAny,)
+
+    def post(self, request, template_id):
+        template = get_object_or_404(Template, id=template_id)
+        document_fields = request.data.get("document_fields")
+        serializer = DocumentFieldForPreviewSerializer(
+            data=document_fields,
+            context={"template_fields": set(template.fields.all())},
+            many=True,
         )
-        if queryset.exists():
-            raise serializers.ValidationError(
-                "Этот документ уже есть в Избранном!"
-            )
-
-        # запись нового объекта FavTemplate
-        serializer.save(user=self.request.user, document=document)
-
-        return Response(status=status.HTTP_201_CREATED)
+        serializer.is_valid(raise_exception=True)
+        context = {}
+        for data in serializer.validated_data:
+            if data["value"]:  # write only fields with non empty value
+                context[data["field"].tag] = data["value"]
+        context_default = {
+            field.tag: field.name for field in template.fields.all()
+        }
+        doc = DocumentTemplate(template.template)
+        buffer = doc.get_partial(context, context_default)
+        response = send_file(buffer, f"{template.name}_preview.docx")
+        return response
