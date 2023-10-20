@@ -99,7 +99,7 @@ docker compose exec backend python manage.py createsuperuser
 ### Выполнить Собрать статику Django:
 ```
 docker compose exec backend python manage.py collectstatic
-docker compose exec backend cp -r /app/collected_static/. /backend_static/static/
+sudo docker compose -f docker-compose.production.yml exec backend cp -r /app/collected_static/. /app/static/
 ```
 
 ## Запуск докер контейнеров на удаленной машине:
