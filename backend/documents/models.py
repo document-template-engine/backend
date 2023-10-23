@@ -86,6 +86,25 @@ class TemplateFieldGroup(models.Model):
         return self.name
 
 
+class TemplateFieldType(models.Model):
+    type = models.SlugField(verbose_name="Тип данных", unique=True)
+    name = models.CharField(max_length=50, verbose_name="Наименование типа")
+    mask = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        verbose_name="Маска допустимых значений",
+    )
+
+    class Meta:
+        verbose_name = "Тип поля шаблона"
+        verbose_name_plural = "Типы поля шаблона"
+        ordering = ("name",)
+
+    def __str__(self):
+        return f"{self.name} ({self.slug})"
+
+
 class TemplateField(models.Model):
     template = models.ForeignKey(
         Template,
@@ -95,7 +114,9 @@ class TemplateField(models.Model):
     )
     tag = models.CharField(max_length=255, verbose_name="Тэг поля")
     name = models.CharField(max_length=255, verbose_name="Наименование поля")
-    hint = models.TextField(null=True, blank=True, verbose_name="Подсказка")
+    hint = models.CharField(
+        max_length=255, null=True, blank=True, verbose_name="Подсказка"
+    )
     group = models.ForeignKey(
         TemplateFieldGroup,
         on_delete=models.SET_NULL,
@@ -104,6 +125,14 @@ class TemplateField(models.Model):
         verbose_name="Группа",
         help_text="Группа полей в шаблоне",
         related_name="fields",
+    )
+    type = models.ForeignKey(
+        TemplateFieldType,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Тип",
+        help_text="Тип поля",
     )
 
     class Meta:
@@ -188,7 +217,8 @@ class FieldToDocument(models.Model):
 
 
 # class ObjectField(models.Model):
-# template_field_id = models.ForeignKey(TemplateField, on_delete=models.CASCADE)
+# template_field_id = models.ForeignKey(TemplateField,
+#                       on_delete=models.CASCADE)
 # object_id = models.ForeignKey(Object, on_delete=models.CASCADE)
 
 

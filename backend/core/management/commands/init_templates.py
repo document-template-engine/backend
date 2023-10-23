@@ -6,21 +6,14 @@ from django.core.files import File
 from django.core.management import BaseCommand
 
 from backend.settings import INITIAL_DATA_DIR
-from documents.models import Template, TemplateField, TemplateFieldGroup
+from core.constants import Messages
+from documents.models import (
+    Template,
+    TemplateField,
+    TemplateFieldGroup,
+    TemplateFieldType,
+)
 
-ALREADY_LOADED_MESSAGE: str = """
-Шаблон с именем '{}' уже существует!
-Вы можете:
-    1) Полностью обновить данные (существующий шаблон и его поля будут удалены)
-    2) Добавить новый шаблон, оставив старый шаблон в базе
-иначе) Оставить таблицу без изменения (не загружать новый файл шаблона)
-Ваш выбор (1 или 2): """
-
-MESSAGE_TEMPLATE_LOAD: str = "Загрузка шаблона '{}'"
-MESSAGE_TEMPLATE_LOADED: str = "Шаблон '{}' загружен"
-MESSAGE_LOAD_FINISHED: str = "Загрузка завершена. Загружено {} шаблонов."
-MESSAGE_FILE_NOT_FOUND: str = "Файл '{}' не найден."
-MESSAGE_UNKNOWN_GROUP_ID: str = "Ошибка: неизвестный идентификатор группы '{}'"
 TEMPLATE_LIST_SOURCE_FILE: str = "template_list.json"
 
 
@@ -47,24 +40,29 @@ def create_template_fields(
     template_fields = []
     for field in fields:
         group_id = field.pop("group")
+        type_slug = field.pop("type")
         group = None
         if group_id:
             group = groups.get(group_id)
             if not group:
-                print(MESSAGE_UNKNOWN_GROUP_ID.format(group_id))
+                print(Messages.UNKNOWN_GROUP_ID.format(group_id))
+        if type_slug:
+            type = TemplateFieldType.objects.get(type=type_slug)
+            if not type:
+                print(Messages.UNKNOWN_TYPE.format(type_slug))
         template_fields.append(
-            TemplateField(template=template, group=group, **field)
+            TemplateField(template=template, group=group, type=type, **field)
         )
     TemplateField.objects.bulk_create(template_fields)
 
 
 def load_template(docx_file_name, json_file_name):
-    print(MESSAGE_TEMPLATE_LOAD.format(docx_file_name))
+    print(Messages.TEMPLATE_LOADING.format(docx_file_name))
     if not os.path.isfile(docx_file_name):
-        print(MESSAGE_FILE_NOT_FOUND.format(docx_file_name))
+        print(Messages.FILE_NOT_FOUND.format(docx_file_name))
         return 0
     if not os.path.isfile(json_file_name):
-        print(MESSAGE_FILE_NOT_FOUND.format(json_file_name))
+        print(Messages.FILE_NOT_FOUND.format(json_file_name))
         return 0
     with open(json_file_name, encoding="utf-8") as jsonfile:
         context = json.load(jsonfile)
@@ -74,7 +72,7 @@ def load_template(docx_file_name, json_file_name):
         new_docx_name = context.pop("template")
         qs = Template.objects.filter(name=name)
         if qs.exists():
-            print(ALREADY_LOADED_MESSAGE.format(name), end="")
+            print(Messages.TEMPLATE_ALREADY_EXISTS.format(name), end="")
             choice = input()
             if choice == "1":
                 qs.delete()
@@ -91,7 +89,7 @@ def load_template(docx_file_name, json_file_name):
             return 0
         field_groups = create_field_groups(groups_list, template)
         create_template_fields(fields, template, field_groups)
-        print(MESSAGE_TEMPLATE_LOADED.format(docx_file_name))
+        print(Messages.TEMPLATE_LOADED.format(docx_file_name))
         return 1
 
 
@@ -112,4 +110,8 @@ class Command(BaseCommand):
             fdocx = os.path.join(INITIAL_DATA_DIR, item.get("template"))
             fjson = os.path.join(INITIAL_DATA_DIR, item.get("fields"))
             records_loaded += load_template(fdocx, fjson)
-        print(self.style.SUCCESS(MESSAGE_LOAD_FINISHED.format(records_loaded)))
+        print(
+            self.style.SUCCESS(
+                Messages.TEMPLATE_LOAD_FINISHED.format(records_loaded)
+            )
+        )
