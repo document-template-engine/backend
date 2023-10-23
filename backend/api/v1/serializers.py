@@ -5,6 +5,7 @@ from django.db import transaction
 from djoser.serializers import UserSerializer
 from rest_framework import serializers
 
+
 from core.constants import Messages
 from documents.models import (
     Category,
@@ -78,28 +79,6 @@ class TemplateSerializer(TemplateSerializerMinified):
         # fields = "__all__"
         read_only_fields = ("is_favorited",)
 
-
-class CustomUserSerializer(UserSerializer):
-    password = serializers.CharField(write_only=True)
-
-    class Meta:
-        model = User
-        fields = ("id", "email", "password")
-        read_only_fields = ("id",)
-
-    def create(self, validated_data):
-        email = validated_data.get("email")
-        password = validated_data.get("password")
-        username = email
-        user = User(email=email, username=username)
-        user.set_password(password)
-        user.save()
-        return user
-
-    def validate(self, data):
-        if User.objects.filter(email=data["email"]):
-            raise serializers.ValidationError("Такой email уже есть!")
-        return data
 
 
 class DocumentFieldSerializer(serializers.ModelSerializer):
@@ -228,3 +207,27 @@ class DocumentFieldForPreviewSerializer(serializers.ModelSerializer):
                 Messages.WRONG_TEMPLATE_FIELD.format(template_field.id)
             )
         return template_field
+
+    
+
+class CustomUserSerializer(UserSerializer):
+    password = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = User
+        fields = ("id", "email", "password")
+        read_only_fields = ("id",)
+
+    def create(self, validated_data):
+        email = validated_data.get("email")
+        password = validated_data.get("password")
+        username = email
+        user = User(email=email, username=username)
+        user.set_password(password)
+        user.save()
+        return user
+
+    def validate(self, data):
+        if User.objects.filter(email=data["email"]):
+            raise serializers.ValidationError("Такой email уже есть!")
+        return data

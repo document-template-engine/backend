@@ -171,13 +171,21 @@ DJOSER = {
         "user": ["djoser.permissions.CurrentUserOrAdminOrReadOnly"],
     },
     "HIDE_USERS": False,
-    "PASSWORD_RESET_CONFIRM_URL": "/set_password/{uid}/{token}",
+    "PASSWORD_RESET_CONFIRM_URL": "#/set_password/{uid}/{token}",
     "SERIALIZERS": {
         "user_create": "api.v1.serializers.CustomUserSerializer",
         "user": "api.v1.serializers.CustomUserSerializer",
     },
+    'SENDACTIVATIONEMAIL': True,
+    'ACTIVATION_URL': '#activation/{uid}/{token}',
 }
 
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.rambler.ru'
+EMAIL_PORT = 465
+EMAIL_USE_SSL = True
+EMAIL_HOST_USER = 'draftnikox@rambler.ru'
+EMAIL_HOST_PASSWORD = '456852Zx'
 
 SWAGGER_SETTINGS = {
     "SECURITY_DEFINITIONS": {
