@@ -1,7 +1,14 @@
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, serializers, status, views, viewsets, generics
+from rest_framework import (
+    filters,
+    serializers,
+    status,
+    views,
+    viewsets,
+    generics,
+)
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -11,10 +18,7 @@ from django.contrib.auth import get_user_model
 
 from rest_framework_simplejwt.tokens import RefreshToken
 from .utils import Util
-from django.contrib.sites.shortcuts import get_current_site
-from django.urls import reverse
 
-from .utils import Util
 from .permissions import IsOwnerOrAdminOrReadOnly
 from .serializers import (
     CustomUserSerializer,
@@ -42,6 +46,7 @@ from documents.models import (
 )
 
 User = get_user_model()
+
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
@@ -94,11 +99,15 @@ class TemplateViewSet(viewsets.ModelViewSet):
 
     @action(
         detail=True,
+        methods=["get"],
         permission_classes=(AllowAny,),
-        url_path=r"download_draft",
+        url_path="download_draft",
+        url_name="download_draft",
     )
     def download_draft(self, request, pk=None):
-        template = get_object_or_404(Template, id=pk)
+        template = serializers.PrimaryKeyRelatedField(
+            many=False, queryset=Template.objects.all()
+        ).to_internal_value(data=pk)
         context = {field.tag: field.name for field in template.fields.all()}
         path = template.template
         doc = DocumentTemplate(path)
@@ -244,6 +253,8 @@ class DocumentFieldViewSet(viewsets.ModelViewSet):
 
 
 class FavTemplateAPIview(APIView):
+    permission_classes = (IsAuthenticated,)
+
     def post(self, request, **kwargs):
         data = {
             "user": self.request.user.pk,
@@ -277,6 +288,8 @@ class FavTemplateAPIview(APIView):
 
 
 class FavDocumentAPIview(APIView):
+    permission_classes = (IsAuthenticated,)
+
     def post(self, request, **kwargs):
         data = {
             "user": self.request.user.pk,
@@ -334,9 +347,7 @@ class AnonymousDownloadPreviewAPIView(views.APIView):
         return response
 
 
-
 class RegisterView(generics.GenericAPIView):
-
     serializer_class = CustomUserSerializer
 
     def post(self, request):
@@ -345,15 +356,21 @@ class RegisterView(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         user_data = serializer.data
-        user = User.objects.get(email=user_data['email'])
+        user = User.objects.get(email=user_data["email"])
         token = RefreshToken.for_user(user).access_token
 
-        absurl = 'https://documents-template.site/'+"?token="+str(token)
-        email_body = 'Hi '+user.username + \
-            ' Use the link below to verify your email \n' + absurl
-        data = {'email_body': email_body, 'to_email': user.email,
-                'email_subject': 'Verify your email'}
+        absurl = "https://documents-template.site/" + "?token=" + str(token)
+        email_body = (
+            "Hi "
+            + user.username
+            + " Use the link below to verify your email \n"
+            + absurl
+        )
+        data = {
+            "email_body": email_body,
+            "to_email": user.email,
+            "email_subject": "Verify your email",
+        }
 
         Util.send_email(data)
         return Response(user_data, status=status.HTTP_201_CREATED)
-    

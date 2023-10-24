@@ -1,6 +1,6 @@
 @TOKEN = Token b5b767cb36da725f900892f627a28dc1c0e40488
-# @URL = https://documents-template.site/
-@URL = http://127.0.0.1:8000
+@URL = https://documents-template.site/
+# @URL = http://127.0.0.1:8000
 
 ###
 POST {{URL}}/api/users/
