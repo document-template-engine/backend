@@ -5,7 +5,6 @@ from django.db import transaction
 from djoser.serializers import UserSerializer
 from rest_framework import serializers
 
-
 from core.constants import Messages
 from documents.models import (
     Category,
@@ -30,10 +29,21 @@ class TemplateFieldSerializer(serializers.ModelSerializer):
     group_name = serializers.StringRelatedField(
         source="group.name", read_only=True
     )
+    type = serializers.SlugRelatedField(slug_field="type", read_only=True)
+    mask = serializers.CharField(source="type.mask", read_only=True)
 
     class Meta:
         model = TemplateField
-        fields = ("id", "tag", "name", "hint", "group_id", "group_name")
+        fields = (
+            "id",
+            "tag",
+            "name",
+            "hint",
+            "group_id",
+            "group_name",
+            "type",
+            "mask",
+        )
 
 
 class TemplateSerializerMinified(serializers.ModelSerializer):
@@ -78,7 +88,6 @@ class TemplateSerializer(TemplateSerializerMinified):
         exclude = ("template",)
         # fields = "__all__"
         read_only_fields = ("is_favorited",)
-
 
 
 class DocumentFieldSerializer(serializers.ModelSerializer):
@@ -146,7 +155,8 @@ class DocumentWriteSerializer(serializers.ModelSerializer):
             template = TemplateField.objects.get(id=field.id).template
             if (
                 document.template == template
-            ):  # Эту проверку надо в валидатор засунуть. Проверяется, принадлежит ли поле выбраному шаблону
+            ):  # Эту проверку надо в валидатор засунуть.
+                # Проверяется, принадлежит ли поле выбраному шаблону
                 field = DocumentField.objects.create(
                     field=field, value=data["value"]
                 )
@@ -163,9 +173,9 @@ class DocumentWriteSerializer(serializers.ModelSerializer):
         for data in document_fields:
             field = data["field"]
             template = TemplateField.objects.get(id=field.id).template
-            if (
-                document.template == template
-            ):  # Эту проверку надо в валидатор засунуть. Проверяется, принадлежит ли поле выбраному шаблону
+            if document.template == template:
+                # Эту проверку надо в валидатор засунуть.
+                #  Проверяется, принадлежит ли поле выбраному шаблону
                 field = DocumentField.objects.create(
                     field=data["field"], value=data["value"]
                 )
@@ -208,7 +218,6 @@ class DocumentFieldForPreviewSerializer(serializers.ModelSerializer):
             )
         return template_field
 
-    
 
 class CustomUserSerializer(UserSerializer):
     password = serializers.CharField(write_only=True)
