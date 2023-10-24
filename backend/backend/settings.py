@@ -16,7 +16,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("SECRET_KEY_DJANGO", "key does not exist")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DEBUG", False)
+DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",")
 
@@ -176,21 +176,20 @@ DJOSER = {
         "user_create": "api.v1.serializers.CustomUserSerializer",
         "user": "api.v1.serializers.CustomUserSerializer",
     },
-    'SENDACTIVATIONEMAIL': True,
-    'ACTIVATION_URL': '#activation/{uid}/{token}',
+    "SENDACTIVATIONEMAIL": True,
+    "ACTIVATION_URL": "#activation/{uid}/{token}",
 }
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.rambler.ru'
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.rambler.ru"
 EMAIL_PORT = 465
 EMAIL_USE_SSL = True
-EMAIL_HOST_USER = 'draftnikox@rambler.ru'
-EMAIL_HOST_PASSWORD = '456852Zx'
+EMAIL_HOST_USER = "draftnikox@rambler.ru"
+EMAIL_HOST_PASSWORD = "456852Zx"
 
 SWAGGER_SETTINGS = {
     "SECURITY_DEFINITIONS": {
         "Token": {"type": "apiKey", "name": "Authorization", "in": "header"}
     },
-     'BASE_PATH': 'https://documents-template.site/api/',
-
+    "BASE_PATH": "https://documents-template.site/api/",
 }
