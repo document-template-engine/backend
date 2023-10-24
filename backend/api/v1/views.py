@@ -1,3 +1,8 @@
+from io import BytesIO
+import subprocess
+import tempfile
+from pathlib import Path
+
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
@@ -49,7 +54,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
     permissions_classes = (AllowAny,)
 
 
-def send_file(filestream, filename: str):
+def send_file(filestream, filename: str, as_attachment: bool = True):
     """Функция подготовки открытого двоичного файла к отправке."""
 
     response = FileResponse(
@@ -205,8 +210,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
         url_path=r"download_document",
     )
     def download_document(self, request, pk=None):
-        """Скачивание готового документа"""
-
+        """Скачивание готового документа."""
         document = get_object_or_404(Document, id=pk)
         context = dict()
         for docfield in FieldToDocument.objects.filter(document=document):
@@ -222,6 +226,34 @@ class DocumentViewSet(viewsets.ModelViewSet):
         response = send_file(buffer, f"{document.template.name}.docx")
         return response
 
+    @action(
+        detail=True,
+        permissions_classes=[IsAuthenticated],
+        url_path="download_pdf",
+    )
+    def download_pdf(self, request, pk=None):
+        """Генерация и выдача на скачивание pdf-файла."""
+        with tempfile.NamedTemporaryFile() as output:
+            outfile = Path(output.name).resolve()
+            outfile.write_bytes(
+                b''.join(self.download_document(request, pk).streaming_content)
+            )
+            subprocess.run([
+                "soffice",
+                 "--headless",
+                 "--invisible",
+                 "--nologo",
+                 "--convert-to",
+                 "pdf",
+                 "--outdir",
+                 outfile.parent,
+                 outfile.absolute(),
+            ])
+        newfile = outfile.with_suffix(".pdf")
+        buffer = BytesIO(newfile.read_bytes())
+        response = send_file(buffer, newfile.name)
+        return response
+            
 
 class DocumentFieldViewSet(viewsets.ModelViewSet):
     """Поле шаблона."""
