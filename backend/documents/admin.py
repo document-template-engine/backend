@@ -1,6 +1,7 @@
+"""Настройки админки для приложения "Документы"."""
 from django.contrib import admin
 
-from . import models
+from documents import models
 
 admin.site.register(models.FieldToDocument)
 
