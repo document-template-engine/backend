@@ -27,3 +27,11 @@ class IsOwnerOrAdminOrReadOnly(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         """Под объектом подразумевается Template или Document."""
         return obj.owner == request.user or request.user.is_superuser
+
+
+class IsOwner(permissions.BasePermission):
+    """Доступ: только владелец."""
+
+    def has_object_permission(self, request, view, obj):
+        """Под объектом подразумевается Document."""
+        return request.user.is_authenticated and obj.owner == request.user

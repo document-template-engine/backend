@@ -1,28 +1,31 @@
+"""Вьюсеты v1 API."""
+import io
+import os
+
+import aspose.words as aw
+from django.contrib.auth import get_user_model
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import (
     filters,
+    generics,
     serializers,
     status,
     views,
     viewsets,
-    generics,
 )
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.contrib.auth import get_user_model
-
 from rest_framework_simplejwt.tokens import RefreshToken
-from .utils import Util
 
-from .permissions import IsOwnerOrAdminOrReadOnly
-from .serializers import (
-    CustomUserSerializer,
+from api.v1.permissions import IsOwner, IsOwnerOrAdminOrReadOnly
+from api.v1.serializers import (
     CategorySerializer,
+    CustomUserSerializer,
     DocumentFieldForPreviewSerializer,
     DocumentFieldSerializer,
     DocumentReadSerializer,
@@ -33,6 +36,7 @@ from .serializers import (
     TemplateSerializer,
     TemplateSerializerMinified,
 )
+from api.v1.utils import Util
 from core.constants import Messages
 from core.template_render import DocumentTemplate
 from documents.models import (
@@ -56,7 +60,6 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
 def send_file(filestream, filename: str):
     """Функция подготовки открытого двоичного файла к отправке."""
-
     response = FileResponse(
         streaming_content=filestream,
         as_attachment=True,
@@ -229,6 +232,23 @@ class DocumentViewSet(viewsets.ModelViewSet):
         doc = DocumentTemplate(path)
         buffer = doc.get_partial(context, context_default)
         response = send_file(buffer, f"{document.template.name}.docx")
+        return response
+
+    @action(
+        detail=True,
+        permission_classes=[IsOwner],
+    )
+    def download_pdf(self, request, pk=None):
+        """Скачивание pdf-файла."""
+        document = get_object_or_404(Document, id=pk, owner=request.user)
+        docx_stream = io.BytesIO(
+            b''.join(self.download_document(request, pk).streaming_content)
+        )
+        docx_file = aw.Document(docx_stream)
+        buffer = io.BytesIO()
+        docx_file.save(buffer, aw.SaveFormat.PDF)
+        buffer.seek(0, os.SEEK_SET)
+        response = send_file(buffer, f"{document.template.name}.pdf")
         return response
 
 

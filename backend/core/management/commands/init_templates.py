@@ -6,6 +6,7 @@ from django.core.files import File
 from django.core.management import BaseCommand
 
 from backend.settings import INITIAL_DATA_DIR
+
 from core.constants import Messages
 from documents.models import (
     Template,
