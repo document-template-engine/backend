@@ -1,16 +1,31 @@
+"""Вьюсеты v1 API."""
+import io
+import os
+
+import aspose.words as aw
+from django.contrib.auth import get_user_model
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, serializers, status, views, viewsets
+from rest_framework import (
+    filters,
+    generics,
+    serializers,
+    status,
+    views,
+    viewsets,
+)
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
 
-from .permissions import IsOwnerOrAdminOrReadOnly
-from .serializers import (
+from api.v1.permissions import IsOwner, IsOwnerOrAdminOrReadOnly
+from api.v1.serializers import (
     CategorySerializer,
+    CustomUserSerializer,
     DocumentFieldForPreviewSerializer,
     DocumentFieldSerializer,
     DocumentReadSerializer,
@@ -21,6 +36,7 @@ from .serializers import (
     TemplateSerializer,
     TemplateSerializerMinified,
 )
+from api.v1.utils import Util
 from core.constants import Messages
 from core.template_render import DocumentTemplate
 from documents.models import (
@@ -33,6 +49,8 @@ from documents.models import (
     Template,
 )
 
+User = get_user_model()
+
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
@@ -42,7 +60,6 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
 def send_file(filestream, filename: str):
     """Функция подготовки открытого двоичного файла к отправке."""
-
     response = FileResponse(
         streaming_content=filestream,
         as_attachment=True,
@@ -85,11 +102,15 @@ class TemplateViewSet(viewsets.ModelViewSet):
 
     @action(
         detail=True,
+        methods=["get"],
         permission_classes=(AllowAny,),
-        url_path=r"download_draft",
+        url_path="download_draft",
+        url_name="download_draft",
     )
     def download_draft(self, request, pk=None):
-        template = get_object_or_404(Template, id=pk)
+        template = serializers.PrimaryKeyRelatedField(
+            many=False, queryset=Template.objects.all()
+        ).to_internal_value(data=pk)
         context = {field.tag: field.name for field in template.fields.all()}
         path = template.template
         doc = DocumentTemplate(path)
@@ -213,6 +234,23 @@ class DocumentViewSet(viewsets.ModelViewSet):
         response = send_file(buffer, f"{document.template.name}.docx")
         return response
 
+    @action(
+        detail=True,
+        permission_classes=[IsOwner],
+    )
+    def download_pdf(self, request, pk=None):
+        """Скачивание pdf-файла."""
+        document = get_object_or_404(Document, id=pk, owner=request.user)
+        docx_stream = io.BytesIO(
+            b''.join(self.download_document(request, pk).streaming_content)
+        )
+        docx_file = aw.Document(docx_stream)
+        buffer = io.BytesIO()
+        docx_file.save(buffer, aw.SaveFormat.PDF)
+        buffer.seek(0, os.SEEK_SET)
+        response = send_file(buffer, f"{document.template.name}.pdf")
+        return response
+
 
 class DocumentFieldViewSet(viewsets.ModelViewSet):
     """Поле шаблона."""
@@ -235,6 +273,8 @@ class DocumentFieldViewSet(viewsets.ModelViewSet):
 
 
 class FavTemplateAPIview(APIView):
+    permission_classes = (IsAuthenticated,)
+
     def post(self, request, **kwargs):
         data = {
             "user": self.request.user.pk,
@@ -268,6 +308,8 @@ class FavTemplateAPIview(APIView):
 
 
 class FavDocumentAPIview(APIView):
+    permission_classes = (IsAuthenticated,)
+
     def post(self, request, **kwargs):
         data = {
             "user": self.request.user.pk,
@@ -323,3 +365,32 @@ class AnonymousDownloadPreviewAPIView(views.APIView):
         buffer = doc.get_partial(context, context_default)
         response = send_file(buffer, f"{template.name}_preview.docx")
         return response
+
+
+class RegisterView(generics.GenericAPIView):
+    serializer_class = CustomUserSerializer
+
+    def post(self, request):
+        user = request.data
+        serializer = self.serializer_class(data=user)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        user_data = serializer.data
+        user = User.objects.get(email=user_data["email"])
+        token = RefreshToken.for_user(user).access_token
+
+        absurl = "https://documents-template.site/" + "?token=" + str(token)
+        email_body = (
+            "Hi "
+            + user.username
+            + " Use the link below to verify your email \n"
+            + absurl
+        )
+        data = {
+            "email_body": email_body,
+            "to_email": user.email,
+            "email_subject": "Verify your email",
+        }
+
+        Util.send_email(data)
+        return Response(user_data, status=status.HTTP_201_CREATED)

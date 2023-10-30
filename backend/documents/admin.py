@@ -1,6 +1,7 @@
+"""Настройки админки для приложения "Документы"."""
 from django.contrib import admin
 
-from . import models
+from documents import models
 
 admin.site.register(models.FieldToDocument)
 
@@ -65,9 +66,16 @@ class TemplateFieldGroupAdmin(admin.ModelAdmin):
     search_fields = ("name", "template")
 
 
+@admin.register(models.TemplateFieldType)
+class TemplateFieldTypeAdmin(admin.ModelAdmin):
+    list_display = ("id", "type", "name", "mask")
+    readonly_fields = ("id",)
+    search_fields = ("name",)
+
+
 @admin.register(models.TemplateField)
 class TemplateFieldAdmin(admin.ModelAdmin):
-    list_display = ("id", "template", "tag", "name", "hint", "group")
+    list_display = ("id", "template", "tag", "name", "hint", "group", "type")
     list_filter = ("template",)
     readonly_fields = ("id",)
     search_fields = ("name",)

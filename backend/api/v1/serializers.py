@@ -29,10 +29,21 @@ class TemplateFieldSerializer(serializers.ModelSerializer):
     group_name = serializers.StringRelatedField(
         source="group.name", read_only=True
     )
+    type = serializers.SlugRelatedField(slug_field="type", read_only=True)
+    mask = serializers.CharField(source="type.mask", read_only=True)
 
     class Meta:
         model = TemplateField
-        fields = ("id", "tag", "name", "hint", "group_id", "group_name")
+        fields = (
+            "id",
+            "tag",
+            "name",
+            "hint",
+            "group_id",
+            "group_name",
+            "type",
+            "mask",
+        )
 
 
 class TemplateSerializerMinified(serializers.ModelSerializer):
@@ -77,29 +88,6 @@ class TemplateSerializer(TemplateSerializerMinified):
         exclude = ("template",)
         # fields = "__all__"
         read_only_fields = ("is_favorited",)
-
-
-class CustomUserSerializer(UserSerializer):
-    password = serializers.CharField(write_only=True)
-
-    class Meta:
-        model = User
-        fields = ("id", "email", "password")
-        read_only_fields = ("id",)
-
-    def create(self, validated_data):
-        email = validated_data.get("email")
-        password = validated_data.get("password")
-        username = email
-        user = User(email=email, username=username)
-        user.set_password(password)
-        user.save()
-        return user
-
-    def validate(self, data):
-        if User.objects.filter(email=data["email"]):
-            raise serializers.ValidationError("Такой email уже есть!")
-        return data
 
 
 class DocumentFieldSerializer(serializers.ModelSerializer):
@@ -167,7 +155,8 @@ class DocumentWriteSerializer(serializers.ModelSerializer):
             template = TemplateField.objects.get(id=field.id).template
             if (
                 document.template == template
-            ):  # Эту проверку надо в валидатор засунуть. Проверяется, принадлежит ли поле выбраному шаблону
+            ):  # Эту проверку надо в валидатор засунуть.
+                # Проверяется, принадлежит ли поле выбраному шаблону
                 field = DocumentField.objects.create(
                     field=field, value=data["value"]
                 )
@@ -184,9 +173,9 @@ class DocumentWriteSerializer(serializers.ModelSerializer):
         for data in document_fields:
             field = data["field"]
             template = TemplateField.objects.get(id=field.id).template
-            if (
-                document.template == template
-            ):  # Эту проверку надо в валидатор засунуть. Проверяется, принадлежит ли поле выбраному шаблону
+            if document.template == template:
+                # Эту проверку надо в валидатор засунуть.
+                #  Проверяется, принадлежит ли поле выбраному шаблону
                 field = DocumentField.objects.create(
                     field=data["field"], value=data["value"]
                 )
@@ -228,3 +217,26 @@ class DocumentFieldForPreviewSerializer(serializers.ModelSerializer):
                 Messages.WRONG_TEMPLATE_FIELD.format(template_field.id)
             )
         return template_field
+
+
+class CustomUserSerializer(UserSerializer):
+    password = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = User
+        fields = ("id", "email", "password")
+        read_only_fields = ("id",)
+
+    def create(self, validated_data):
+        email = validated_data.get("email")
+        password = validated_data.get("password")
+        username = email
+        user = User(email=email, username=username)
+        user.set_password(password)
+        user.save()
+        return user
+
+    def validate(self, data):
+        if User.objects.filter(email=data["email"]):
+            raise serializers.ValidationError("Такой email уже есть!")
+        return data
