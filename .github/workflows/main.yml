@@ -108,12 +108,10 @@ jobs:
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
           script: |
             cd documents_templates
-            docker system prune -a
             sudo docker compose -f docker-compose.production.yml pull
             sudo docker compose -f docker-compose.production.yml down
             sudo docker compose -f docker-compose.production.yml up -d
-            sudo docker ps -aq --no-trunc
-            sudo docker rm $(sudo docker ps -aq --no-trunc)
+            sudo docker system prune -a
             
   send_message:
     runs-on: ubuntu-latest
