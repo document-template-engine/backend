@@ -124,4 +124,4 @@ jobs:
         with:
           to: ${{ secrets.TELEGRAM_TO }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
-          message: Деплой ${{ secrets.PROJECT_NAME }}_backend and _nginx успешно выполнен!
+          message: Деплой ${{ secrets.PROJECT_NAME }}_backend and nginx успешно выполнен!
