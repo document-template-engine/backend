@@ -113,7 +113,7 @@ jobs:
             sudo docker compose -f docker-compose.production.yml down
             sudo docker compose -f docker-compose.production.yml up -d
             sudo docker ps -aq --no-trunc
-            sudo docker rm $(docker ps -aq --no-trunc)
+            sudo docker rm $(sudo docker ps -aq --no-trunc)
             
   send_message:
     runs-on: ubuntu-latest
