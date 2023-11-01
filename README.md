@@ -178,7 +178,7 @@ POST  api/v1/auth/token/login/
 ```
 
 ### Узнать свои данные
-#### Endpoint
+#### Endpoint.
 ```
 GET  api/v1/users/me/
 ```
