@@ -148,6 +148,9 @@ class TemplateField(models.Model):
         verbose_name="Тип",
         help_text="Тип поля",
     )
+    length = models.PositiveIntegerField(
+        blank=True, null=True, verbose_name="Размер поля ввода"
+    )
 
     class Meta:
         verbose_name = "Поле шаблона"
@@ -175,9 +178,7 @@ class DocumentField(models.Model):
         related_name="document_fields",
     )
     value = models.CharField(max_length=255, verbose_name="Содержимое поля")
-    description = models.TextField(
-        verbose_name="Описание поля", blank=True
-    )
+    description = models.TextField(verbose_name="Описание поля", blank=True)
 
     class Meta:
         verbose_name = "Поле документа"
@@ -209,8 +210,7 @@ class Document(models.Model):
         auto_now=True, verbose_name="Дата изменения"
     )
     completed = models.BooleanField(
-        verbose_name="Документ заполнен",
-        default=False
+        verbose_name="Документ заполнен", default=False
     )
     description = models.TextField(verbose_name="Описание документа")
     document_fields = models.ManyToManyField(
