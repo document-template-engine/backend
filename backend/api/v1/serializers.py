@@ -43,7 +43,51 @@ class TemplateFieldSerializer(serializers.ModelSerializer):
             "group_name",
             "type",
             "mask",
+            "length",
         )
+
+
+class TemplateFieldSerializerMinified(serializers.ModelSerializer):
+    """Сериализатор поля шаблона сокращенный (без полей группы)"""
+
+    type = serializers.SlugRelatedField(slug_field="type", read_only=True)
+    mask = serializers.CharField(source="type.mask", read_only=True)
+
+    class Meta:
+        model = TemplateField
+        fields = (
+            "id",
+            "tag",
+            "name",
+            "hint",
+            "type",
+            "mask",
+            "length",
+        )
+
+
+class TemplateGroupSerializer(serializers.ModelSerializer):
+    """Сериализатор группы полей шаблона"""
+
+    fields = TemplateFieldSerializerMinified(
+        read_only=True,
+        many=True,
+        # source="fields",
+        allow_empty=True,
+    )
+
+    class Meta:
+        model = TemplateField
+        fields = (
+            "id",
+            "name",
+            "fields",
+        )
+
+    def to_representation(self, instance):
+        response = super().to_representation(instance)
+        response["fields"].sort(key=lambda x: x["id"])
+        return response
 
 
 class TemplateSerializerMinified(serializers.ModelSerializer):
@@ -73,8 +117,8 @@ class TemplateSerializerMinified(serializers.ModelSerializer):
         ).exists()
 
 
-class TemplateSerializer(TemplateSerializerMinified):
-    """Сериализатор шаблона."""
+class TemplateSerializerPlain(TemplateSerializerMinified):
+    """Сериализатор шаблона (без вложенности полей в группы)."""
 
     fields = TemplateFieldSerializer(
         read_only=True,
@@ -88,6 +132,36 @@ class TemplateSerializer(TemplateSerializerMinified):
         exclude = ("template",)
         # fields = "__all__"
         read_only_fields = ("is_favorited",)
+
+
+class TemplateSerializer(TemplateSerializerMinified):
+    """Сериализатор шаблона (поля сгруппированы внутри grouped_fields)."""
+
+    grouped_fields = TemplateGroupSerializer(
+        read_only=True,
+        many=True,
+        source="field_groups",
+        allow_empty=True,
+    )
+    ungrouped_fields = serializers.SerializerMethodField()
+
+    class Meta(TemplateSerializerMinified.Meta):
+        model = Template
+        exclude = ("template",)
+        read_only_fields = (
+            "is_favorited",
+            "grouped_fields",
+            "ungrouped_fields",
+        )
+
+    def get_ungrouped_fields(self, instance):
+        solo_fields = instance.fields.filter(group=None).order_by("id")
+        return TemplateFieldSerializerMinified(solo_fields, many=True).data
+
+    def to_representation(self, instance):
+        response = super().to_representation(instance)
+        response["grouped_fields"].sort(key=lambda x: x["id"])
+        return response
 
 
 class DocumentFieldSerializer(serializers.ModelSerializer):
