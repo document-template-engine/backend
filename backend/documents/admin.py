@@ -49,6 +49,7 @@ class TemplateAdmin(admin.ModelAdmin):
         "modified",
         "deleted",
         "description",
+        "image",
     )
     list_filter = ("owner", "category", "deleted")
     readonly_fields = ("id",)
