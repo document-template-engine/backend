@@ -1,8 +1,8 @@
-@TOKEN = Token 77435c1657026635eda41cb962fb9d39d4054e17
+@TOKEN = Token bb4f5dbedaafd2730f35803e7087e797479d68f5
 @URL = https://documents-template.site/
 
 ###
-GET {{URL}}/api/documents/
+GET {{URL}}/api/documents/32/
 Content-Type: application/json
 Authorization: {{TOKEN}}
 

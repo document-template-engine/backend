@@ -6,7 +6,7 @@ from api.v1.views import (
     TemplateViewSet,
     FavTemplateAPIview,
     FavDocumentAPIview,
-    RegisterView,
+    # RegisterView,
 )
 from django.urls import include, path, re_path
 from rest_framework.routers import DefaultRouter
@@ -52,7 +52,7 @@ urlpatterns = [
         AnonymousDownloadPreviewAPIView.as_view(),
         name="download_preview",
     ),
-    path("users/", RegisterView.as_view(), name="register"),
+    # path("users/", RegisterView.as_view(), name="register"),
     path("", include(router_v1.urls)),
     path("", include("djoser.urls")),
     path("auth/", include("djoser.urls.authtoken")),

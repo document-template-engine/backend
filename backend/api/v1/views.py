@@ -20,12 +20,11 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken
 
 from api.v1.permissions import IsOwner, IsOwnerOrAdminOrReadOnly
 from api.v1.serializers import (
     CategorySerializer,
-    CustomUserSerializer,
+
     DocumentFieldForPreviewSerializer,
     DocumentFieldSerializer,
     DocumentReadSerializer,
@@ -36,7 +35,7 @@ from api.v1.serializers import (
     TemplateSerializer,
     TemplateSerializerMinified,
 )
-from api.v1.utils import Util
+# from api.v1.utils import Util
 from core.constants import Messages
 from core.template_render import DocumentTemplate
 from documents.models import (
@@ -367,30 +366,30 @@ class AnonymousDownloadPreviewAPIView(views.APIView):
         return response
 
 
-class RegisterView(generics.GenericAPIView):
-    serializer_class = CustomUserSerializer
+# class RegisterView(generics.GenericAPIView):
+#     serializer_class = CustomUserSerializer
 
-    def post(self, request):
-        user = request.data
-        serializer = self.serializer_class(data=user)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        user_data = serializer.data
-        user = User.objects.get(email=user_data["email"])
-        token = RefreshToken.for_user(user).access_token
+#     def post(self, request):
+#         user = request.data
+#         serializer = self.serializer_class(data=user)
+#         serializer.is_valid(raise_exception=True)
+#         serializer.save()
+#         user_data = serializer.data
+#         user = User.objects.get(email=user_data["email"])
+#         token = RefreshToken.for_user(user).access_token
 
-        absurl = "https://documents-template.site/" + "?token=" + str(token)
-        email_body = (
-            "Hi "
-            + user.username
-            + " Use the link below to verify your email \n"
-            + absurl
-        )
-        data = {
-            "email_body": email_body,
-            "to_email": user.email,
-            "email_subject": "Verify your email",
-        }
+#         absurl = "https://documents-template.site/" + "?token=" + str(token)
+#         email_body = (
+#             "Hi "
+#             + user.username
+#             + " Use the link below to verify your email \n"
+#             + absurl
+#         )
+#         data = {
+#             "email_body": email_body,
+#             "to_email": user.email,
+#             "email_subject": "Verify your email",
+#         }
 
-        Util.send_email(data)
-        return Response(user_data, status=status.HTTP_201_CREATED)
+#         Util.send_email(data)
+#         return Response(user_data, status=status.HTTP_201_CREATED)
