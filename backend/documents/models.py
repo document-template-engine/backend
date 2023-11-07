@@ -151,6 +151,12 @@ class TemplateField(models.Model):
     length = models.PositiveIntegerField(
         blank=True, null=True, verbose_name="Размер поля ввода"
     )
+    image = models.ImageField(
+        "Картинка",
+        upload_to="posts/",
+        null=True,
+        blank=True,
+    )
 
     class Meta:
         verbose_name = "Поле шаблона"
