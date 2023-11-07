@@ -1,5 +1,5 @@
 """Сериализаторы для API."""
-
+from django.core.files.base import ContentFile
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from djoser.serializers import UserSerializer
@@ -19,6 +19,15 @@ from documents.models import (
 
 User = get_user_model()
 
+class Base64ImageField(serializers.ImageField):
+    def to_internal_value(self, data):
+        if isinstance(data, str) and data.startswith("data:image"):
+            format, imgstr = data.split(";base64,")
+            ext = format.split("/")[-1]
+
+            data = ContentFile(base64.b64decode(imgstr), name="temp." + ext)
+
+        return super().to_internal_value(data)
 
 class TemplateFieldSerializer(serializers.ModelSerializer):
     """Сериализатор поля шаблона."""
@@ -94,7 +103,7 @@ class TemplateSerializerMinified(serializers.ModelSerializer):
     """Сериализатор шаблонов сокращенный."""
 
     is_favorited = serializers.SerializerMethodField()
-
+    image = Base64ImageField(required=True, allow_null=True)
     class Meta:
         model = Template
         exclude = ("template",)
@@ -102,6 +111,7 @@ class TemplateSerializerMinified(serializers.ModelSerializer):
             "name",
             "category",
             "owner",
+            "image",
             "modified",
             "deleted",
             "description",
