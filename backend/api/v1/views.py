@@ -20,12 +20,11 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken
 
 from api.v1.permissions import IsOwner, IsOwnerOrAdminOrReadOnly
 from api.v1.serializers import (
     CategorySerializer,
-    CustomUserSerializer,
+
     DocumentFieldForPreviewSerializer,
     DocumentFieldSerializer,
     DocumentReadSerializer,
@@ -36,7 +35,7 @@ from api.v1.serializers import (
     TemplateSerializer,
     TemplateSerializerMinified,
 )
-from api.v1.utils import Util
+# from api.v1.utils import Util
 from core.constants import Messages
 from core.template_render import DocumentTemplate
 from documents.models import (
