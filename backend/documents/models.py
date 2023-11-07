@@ -50,7 +50,12 @@ class Template(models.Model):
     modified = models.DateField(verbose_name="Дата модификации", auto_now=True)
     deleted = models.BooleanField(verbose_name="Удален")
     description = models.TextField(verbose_name="Описание шаблона")
-
+    image = models.ImageField(
+        "Картинка",
+        upload_to="posts/",
+        null=True,
+        blank=True,
+    )
     class Meta:
         verbose_name = "Шаблон"
         verbose_name_plural = "Шаблоны"
@@ -151,12 +156,7 @@ class TemplateField(models.Model):
     length = models.PositiveIntegerField(
         blank=True, null=True, verbose_name="Размер поля ввода"
     )
-    image = models.ImageField(
-        "Картинка",
-        upload_to="posts/",
-        null=True,
-        blank=True,
-    )
+
 
     class Meta:
         verbose_name = "Поле шаблона"
