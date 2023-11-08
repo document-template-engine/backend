@@ -3,8 +3,6 @@ from django.contrib import admin
 
 from documents import models
 
-admin.site.register(models.FieldToDocument)
-
 
 @admin.register(models.Category)
 class CategoryAdmin(admin.ModelAdmin):
@@ -104,6 +102,11 @@ class TemplateFieldAdmin(admin.ModelAdmin):
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
+class DocumentFieldInlineAdmin(admin.TabularInline):
+    model = models.DocumentField
+    extra = 1
+
+
 @admin.register(models.Document)
 class DocumentAdmin(admin.ModelAdmin):
     list_display = (
@@ -117,11 +120,12 @@ class DocumentAdmin(admin.ModelAdmin):
     )
     list_filter = ("template", "owner", "completed")
     readonly_fields = ("id", "created", "updated")
+    inlines = (DocumentFieldInlineAdmin,)
 
 
 @admin.register(models.DocumentField)
 class DocumentFieldAdmin(admin.ModelAdmin):
-    list_display = ("id", "field_id", "value", "description")
+    list_display = ("id", "document_id", "field_id", "value")
     readonly_fields = ("id",)
 
 

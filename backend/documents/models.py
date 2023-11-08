@@ -56,6 +56,7 @@ class Template(models.Model):
         null=True,
         blank=True,
     )
+
     class Meta:
         verbose_name = "Шаблон"
         verbose_name_plural = "Шаблоны"
@@ -157,7 +158,6 @@ class TemplateField(models.Model):
         blank=True, null=True, verbose_name="Размер поля ввода"
     )
 
-
     class Meta:
         verbose_name = "Поле шаблона"
         verbose_name_plural = "Поля шаблона"
@@ -172,28 +172,6 @@ class TemplateField(models.Model):
         """Запрет назначения группы, привязанной к другому шаблону."""
         if self.group and self.group.template != self.template:
             raise ValidationError(Messages.WRONG_FIELD_AND_GROUP_TEMPLATES)
-
-
-class DocumentField(models.Model):
-    """Поля документа."""
-
-    field = models.ForeignKey(
-        TemplateField,
-        on_delete=models.PROTECT,
-        verbose_name="Поле",
-        related_name="document_fields",
-    )
-    value = models.CharField(max_length=255, verbose_name="Содержимое поля")
-    description = models.TextField(verbose_name="Описание поля", blank=True)
-
-    class Meta:
-        verbose_name = "Поле документа"
-        verbose_name_plural = "Поля документа"
-        ordering = ("field__template", "field")
-
-    def __str__(self):
-        """Отображение - шаблон поле."""
-        return f"{self.field.template} {self.field}"
 
 
 class Document(models.Model):
@@ -219,9 +197,6 @@ class Document(models.Model):
         verbose_name="Документ заполнен", default=False
     )
     description = models.TextField(verbose_name="Описание документа")
-    document_fields = models.ManyToManyField(
-        DocumentField, through="FieldToDocument"
-    )
 
     class Meta:
         verbose_name = "Документ"
@@ -233,27 +208,72 @@ class Document(models.Model):
         """Автор документа и название шаблона."""
         return f"{self.owner} {self.template}"
 
+    def create_document_fields(self, fields_data):
+        """Создание полей для данного документа по данным из fields_data"""
+        document_fields = []
+        for field_data in fields_data:
+            template_field = field_data["field"]
+            template = TemplateField.objects.get(id=template_field.id).template
+            if self.template == template:
+                # Эту проверку надо в валидатор засунуть.
+                # Проверяется, принадлежит ли поле шаблону документа
+                document_fields.append(
+                    DocumentField(
+                        field=template_field,
+                        value=field_data["value"],
+                        document=self,
+                    )
+                )
+        DocumentField.objects.bulk_create(document_fields)
 
-class FieldToDocument(models.Model):
-    """Связь полей и документов."""
 
+class DocumentField(models.Model):
+    """Поля документа."""
+
+    field = models.ForeignKey(
+        TemplateField,
+        on_delete=models.PROTECT,
+        verbose_name="Поле",
+        related_name="document_fields",
+    )
+    value = models.CharField(max_length=255, verbose_name="Содержимое поля")
+    # description = models.CharField(verbose_name="Описание поля", blank=True)
     document = models.ForeignKey(
         Document,
         on_delete=models.CASCADE,
-        related_name="document_of_field",
-    )
-    fields = models.ForeignKey(
-        DocumentField,
-        on_delete=models.CASCADE,
-        related_name="fields_of_document",
+        verbose_name="Документ",
+        related_name="document_fields",
     )
 
     class Meta:
-        verbose_name = "Связь между полем и документом"
-        verbose_name_plural = "Связи между полями и документами"
+        verbose_name = "Поле документа"
+        verbose_name_plural = "Поля документа"
+        ordering = ("field__template", "field")
 
     def __str__(self):
-        return f"{self.document} {self.fields}"
+        """Отображение - шаблон поле."""
+        return f"{self.field.template} {self.field}"
+
+    # class FieldToDocument(models.Model):
+    #     """Связь полей и документов."""
+
+    #     document = models.ForeignKey(
+    #         Document,
+    #         on_delete=models.CASCADE,
+    #         related_name="document_of_field",
+    #     )
+    #     fields = models.ForeignKey(
+    #         DocumentField,
+    #         on_delete=models.CASCADE,
+    #         related_name="fields_of_document",
+    #     )
+
+    #     class Meta:
+    #         verbose_name = "Связь между полем и документом"
+    #         verbose_name_plural = "Связи между полями и документами"
+
+    # def __str__(self):
+    #     return f"{self.document} {self.fields}"
 
 
 class FavTemplate(models.Model):
