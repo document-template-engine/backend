@@ -106,6 +106,13 @@ class DocumentFieldInlineAdmin(admin.TabularInline):
     model = models.DocumentField
     extra = 1
 
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "field" and request._document_instance_:
+            template = request._document_instance_.template
+            if template:
+                kwargs["queryset"] = template.fields.all()
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
 
 @admin.register(models.Document)
 class DocumentAdmin(admin.ModelAdmin):
@@ -122,11 +129,26 @@ class DocumentAdmin(admin.ModelAdmin):
     readonly_fields = ("id", "created", "updated")
     inlines = (DocumentFieldInlineAdmin,)
 
+    def get_form(self, request, instance=None, **kwargs):
+        request._document_instance_ = instance
+        return super().get_form(request, instance, **kwargs)
+
 
 @admin.register(models.DocumentField)
 class DocumentFieldAdmin(admin.ModelAdmin):
     list_display = ("id", "document_id", "field_id", "value")
     readonly_fields = ("id",)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "field":
+            docfield_id = request.resolver_match.kwargs.get("object_id")
+            if docfield_id:
+                docfield = models.DocumentField.objects.get(id=docfield_id)
+                if docfield.document.template:
+                    kwargs[
+                        "queryset"
+                    ] = docfield.document.template.fields.all()
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 admin.site.site_header = "Административная панель Шаблонизатор"
