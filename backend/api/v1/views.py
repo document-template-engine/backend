@@ -24,10 +24,10 @@ from rest_framework.views import APIView
 from api.v1.permissions import IsOwner, IsOwnerOrAdminOrReadOnly
 from api.v1.serializers import (
     CategorySerializer,
-
     DocumentFieldForPreviewSerializer,
     DocumentFieldSerializer,
-    DocumentReadSerializer,
+    DocumentReadSerializerMinified,
+    DocumentReadSerializerExtended,
     DocumentWriteSerializer,
     FavDocumentSerializer,
     FavTemplateSerializer,
@@ -35,16 +35,15 @@ from api.v1.serializers import (
     TemplateSerializer,
     TemplateSerializerMinified,
 )
+
 # from api.v1.utils import Util
 from core.constants import Messages
 from core.template_render import DocumentTemplate
 from documents.models import (
     Category,
     Document,
-    DocumentField,
     FavDocument,
     FavTemplate,
-    FieldToDocument,
     Template,
 )
 
@@ -151,7 +150,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
     """Документ."""
 
     queryset = Document.objects.all()
-    serializer_class = DocumentReadSerializer
+    serializer_class = DocumentReadSerializerMinified
     http_method_names = ("get", "post", "patch", "delete")
     permissions_classes = (IsAuthenticated,)
     filter_backends = (
@@ -171,8 +170,10 @@ class DocumentViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
         """Выбор сериализатора."""
-        if self.action in ["list", "retrieve"]:
-            return DocumentReadSerializer
+        if self.action == "retrieve":
+            return DocumentReadSerializerExtended
+        elif self.action == "list":
+            return DocumentReadSerializerMinified
         return DocumentWriteSerializer
 
     def perform_create(self, serializer):
@@ -189,7 +190,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
         """Возвращает список незаконченных документов/черновиков"""
         user = self.request.user
         queryset = Document.objects.filter(completed=False, owner=user)
-        serializer = DocumentReadSerializer(
+        serializer = DocumentReadSerializerMinified(
             queryset, many=True, context={"request": request}
         )
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -220,9 +221,9 @@ class DocumentViewSet(viewsets.ModelViewSet):
 
         document = get_object_or_404(Document, id=pk)
         context = dict()
-        for docfield in FieldToDocument.objects.filter(document=document):
-            template_field = docfield.fields.field
-            context[template_field.tag] = docfield.fields.value
+        for docfield in document.document_fields.all():
+            template_field = docfield.field
+            context[template_field.tag] = docfield.value
         context_default = {
             field.tag: field.name for field in document.template.fields.all()
         }
@@ -241,7 +242,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
         """Скачивание pdf-файла."""
         document = get_object_or_404(Document, id=pk, owner=request.user)
         docx_stream = io.BytesIO(
-            b''.join(self.download_document(request, pk).streaming_content)
+            b"".join(self.download_document(request, pk).streaming_content)
         )
         docx_file = aw.Document(docx_stream)
         buffer = io.BytesIO()
@@ -267,8 +268,7 @@ class DocumentFieldViewSet(viewsets.ModelViewSet):
             or document.owner != self.request.user
         ):
             raise PermissionDenied()
-        through_set = FieldToDocument.objects.filter(document=document).all()
-        return DocumentField.objects.filter(fieldtodocument__in=through_set)
+        return document.document_fields.objects.all()
 
 
 class FavTemplateAPIview(APIView):
