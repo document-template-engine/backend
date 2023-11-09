@@ -299,9 +299,7 @@ class FavTemplateAPIview(APIView):
         )
         # проверка, что такой FavTemplate существует в БД
         if not queryset.exists():
-            raise serializers.ValidationError(
-                "Этот шаблон отсутствует в Избранном!"
-            )
+            return Response(status=status.HTTP_404_NOT_FOUND)
         queryset.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -334,9 +332,7 @@ class FavDocumentAPIview(APIView):
         )
         # проверка, что такой FavDocument существует в БД
         if not queryset.exists():
-            raise serializers.ValidationError(
-                "Этот документ отсутствует в Избранном!"
-            )
+            return Response(status=status.HTTP_404_NOT_FOUND)
         queryset.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
