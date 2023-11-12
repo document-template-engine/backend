@@ -170,7 +170,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
             return self.request.user.documents
         else:
             user = User.objects.get(id=1)
-            return Document.objects.get(owner=user)
+            return Document.objects.filter(owner=user)
         return Document.objects.none()
 
     def get_serializer_class(self):
