@@ -152,7 +152,8 @@ class DocumentViewSet(viewsets.ModelViewSet):
     queryset = Document.objects.all()
     serializer_class = DocumentReadSerializerMinified
     http_method_names = ("get", "post", "patch", "delete")
-    permissions_classes = (IsAuthenticated,)
+    # permissions_classes = (IsAuthenticated,)
+    permissions_classes = (AllowAny,)
     filter_backends = (
         filters.SearchFilter,
         filters.OrderingFilter,
@@ -164,8 +165,12 @@ class DocumentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Выдаем только список документов текущего пользователя."""
+        #ЗАглушка
         if self.request.user.is_authenticated:
             return self.request.user.documents
+        else:
+            user = User.objects.get(id=1)
+            return Document.objects.get(owner=user)
         return Document.objects.none()
 
     def get_serializer_class(self):
@@ -182,7 +187,8 @@ class DocumentViewSet(viewsets.ModelViewSet):
     @action(
         detail=False,
         permission_classes=[
-            IsAuthenticated,
+            # IsAuthenticated,
+            AllowAny,
         ],
         url_path=r"draft",
     )
@@ -206,7 +212,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
         """Возвращает список законченных документов/история"""
         user = self.request.user
         queryset = Document.objects.filter(completed=True, owner=user)
-        serializer = DocumentReadSerializer(
+        serializer = DocumentReadSerializerMinified(
             queryset, many=True, context={"request": request}
         )
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -257,17 +263,19 @@ class DocumentFieldViewSet(viewsets.ModelViewSet):
 
     serializer_class = DocumentFieldSerializer
     http_method_names = ("get",)
-    permissions_classes = (IsAuthenticated,)
+    # permissions_classes = (IsAuthenticated,)
+    permissions_classes = (AllowAny,)
     pagination_class = None
 
     def get_queryset(self):
         document_id = self.kwargs.get("document_id")
         document = get_object_or_404(Document, id=document_id)
-        if (
-            not (self.request.user.is_authenticated)
-            or document.owner != self.request.user
-        ):
-            raise PermissionDenied()
+        #ЗАглушка
+        # if (
+        #     not (self.request.user.is_authenticated)
+        #     or document.owner != self.request.user
+        # ):
+        #     raise PermissionDenied()
         return document.document_fields.objects.all()
 
 

@@ -1,10 +1,11 @@
 @TOKEN = Token bb4f5dbedaafd2730f35803e7087e797479d68f5
-@URL = https://documents-template.site/
+# @URL = https://documents-template.site/
+@URL = http://127.0.0.1:8000
 
 ###
 GET {{URL}}/api/documents/32/
 Content-Type: application/json
-Authorization: {{TOKEN}}
+# Authorization: {{TOKEN}}
 
 {
 }
@@ -12,7 +13,7 @@ Authorization: {{TOKEN}}
 ###
 POST {{URL}}/api/documents/
 Content-Type: application/json
-Authorization: {{TOKEN}}
+# Authorization: {{TOKEN}}
 
 {
       "description": "doc1",
