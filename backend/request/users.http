@@ -1,13 +1,13 @@
 @TOKEN = Token b5b767cb36da725f900892f627a28dc1c0e40488
-@URL = https://documents-template.site
-# @URL = http://127.0.0.1:8000
+# @URL = https://documents-template.site
+@URL = http://127.0.0.1:8000
 
 ###
 POST {{URL}}/api/users/
 Content-Type: application/json
 
 {
-    "email": "nikox11882@mail.ru",
+    "email": "nikox1181182@mail.ru",
     "username": "nikox1122@mail.ru",
     "password": "456852Zx",
     "first_name": "kewk",
@@ -19,7 +19,7 @@ POST {{URL}}/api/auth/token/login/
 Content-Type: application/json
 
 {
-    "email": "nikox112@mail.ru",
+    "email": "nikox118182@mail.ru",
     "password": "456852Zx"
 }
 
