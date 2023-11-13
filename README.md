@@ -8,6 +8,22 @@
 многих областях, включая бизнес, юриспруденцию, образование и другие.
 
 
+
+## Основная логика
+В основе логики шаблонизатора лежит создание готовых word документов на основе шаблона. Шаблон создается по определенным правилам и хранится на сервере в виде docx файлов. В шаблонах предусмотрены возможности дополнительных обработок вводимых пользователем данных (склонения по падежам, доп форматирование и др), более подробно об этом можно глянуть в инструкции([ссылка](https://github.com/document-template-engine/demo-repository/files/13055545/_._._.docx)). На данном этабе шаблон и его поля создаются администратором. Система регистрации и авторизации построена на основе djoser, с некоторыми модификациями
+
+Невторизированный пользователь имеет возможность:
+  - просмотреть список всех доступных шаблонов базы /api/templates/
+  - скачать шаблон документа /api/templates/{id}/download_draft/
+  - сформировать превью документа на основе шаблона и предоставляемых данных полей и скачать его (без сохранения на сервере)  /api/templates/{id}/download_preview/
+Авторизованный пользователь имеет возможность:
+  - формировать документы на основании выбранного шаблона и предоставленных данных и сохранять документы на сервере
+  - скачивать сохраненные документы в формате docx /api/documents/{id}/download_dpcument/
+  - добавлять шаблоны или документы в избранное
+  - доступ к документам и данным отдельных документов имеет только администратор или автор документа
+
+
+
 ### Технологии
 - **Python - 3.9**
 - **Django - 3.2**
@@ -17,7 +33,6 @@
 
 ### Авторы
 - [Nikki Nikonor](https://github.com/Paymir121)
-- [Дубинин Николай](https://github.com/dubininnik)
 - [Тимченко Александр](https://github.com/ASTimch)
 - [Скуридин Андрей](https://github.com/andrzej-skuridin)
 - [Николай Петров](https://github.com/NikolayPetrow23)
@@ -30,109 +45,113 @@
 Клонируете репозиторий:
 
 ```bash
-git clone  git@github.com:document-template-engine/backend.git
+    git clone  git@github.com:document-template-engine/backend.git
 ```
 
-### Cоздать и активировать виртуальное окружение:
+### Cоздать  виртуальное окружение:
 ```
-python -m venv venv
-
-# Если у вас Linux/macOS
-
+    python -m venv venv
+```
+# активировать виртуальное окружение, Если у вас Linux/macOS
+```
     source venv/bin/activate
-
-# Если у вас windows
-
-    source venv/scripts/activate
-
 ```
+# Активировать виртуальное окружение, Если у вас windows
+```
+    source venv/scripts/activate
+```
+
 ### Установить зависимости из файла requirements.txt:
 ```
-cd backend
-python -m pip install --upgrade pip
-pip install -r requirements.txt
+    cd backend
+    python -m pip install --upgrade pip
+    pip install -r requirements.txt
 ```
 
 
 ### Выполнить миграции:
 ```
-cd backend
-python manage.py makemigrations
-python manage.py migrate
+    python manage.py makemigrations
+    python manage.py migrate
 ```
 
 ### Запустить проект:
 ```
-cd backend
-python manage.py runserver
+    python manage.py runserver
 ```
 
 ### Создать суперпользователя:
 ```
-cd backend
-python manage.py createsuperuser
+    python manage.py createsuperuser
 ```
 
 ### Добавить темлейтов в базу:
 ```
-cd backend
-python manage.py init_field_types
-python manage.py init_templates
+    python manage.py init_field_types
+    python manage.py init_templates
+
 ```
 
 ## Запуск докер контейнеров на локальной машине:
 
 ### Билдим проект и запускаем:
 ```
-docker compose up --build
+    docker compose up --build
 ```
 
 ### Выполнить миграции:
 ```
-docker compose exec backend python manage.py migrate
+    docker compose exec backend python manage.py migrate
 ```
 
 ### Выполнить создание суперпользователя:
 ```
-docker compose exec backend python manage.py createsuperuser
+    docker compose exec backend python manage.py createsuperuser
 ```
 
 ### Выполнить Собрать статику Django:
 ```
-sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic
-sudo docker compose -f docker-compose.production.yml exec backend cp -r /app/collected_static/. /app/static/
+    sudo docker compose  exec backend python manage.py collectstatic
+    sudo docker compose  exec backend cp -r /app/collected_static/. /app/static/
 ```
 
 ## Запуск докер контейнеров на удаленной машине:
 
 ### Выполнить обновление apt:
 ```
-sudo apt update
+    sudo apt update
 ```
 
 ### Билдим проект и запускаем:
 ```
-sudo docker compose -f docker-compose.production.yml up --build
+    sudo docker compose -f docker-compose.production.yml up --build
 ```
 
 ### Выполнить миграции:
 ```
-docker compose -f docker-compose.production.yml exec backend python manage.py migrate
+    sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate
 ```
 
 ### Выполнить миграции:
 ```
-docker compose -f docker-compose.production.yml exec backend python manage.py createsuperuser
+    docker compose -f docker-compose.production.yml exec backend python manage.py createsuperuser
+```
+
+### Выполнить Собрать статику Django:
+```
+    sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic
+    sudo docker compose -f docker-compose.production.yml exec backend cp -r /app/collected_static/. /app/static/
 ```
 
 ### Выполнить миграции:
 ```
-sudo docker compose -f docker-compose.production.yml exec backend python manage.py init_templates
+    sudo docker compose -f docker-compose.production.yml exec backend python manage.py init_field_types
+    sudo docker compose -f docker-compose.production.yml exec backend python manage.py init_templates
 ```
 
 ### Настройки nginx:
 ```
-sudo nano /etc/nginx/sites-enabled/default
+    sudo nano /etc/nginx/sites-enabled/default
 ```
 
 ## Примеры запросов и ответов к API
@@ -140,7 +159,7 @@ sudo nano /etc/nginx/sites-enabled/default
 ### Регистрация
 #### Endpoint
 ```
-POST  api/v1/users/
+    POST  api/v1/users/
 ```
 #### Пример запроса
 ```
@@ -160,7 +179,7 @@ POST  api/v1/users/
 ### Аутентификация
 #### Endpoint
 ```
-POST  api/v1/auth/token/login/
+    POST  api/v1/auth/token/login/
 ```
 
 #### Пример запроса 
@@ -181,7 +200,7 @@ POST  api/v1/auth/token/login/
 ### Узнать свои данные
 #### Endpoint.
 ```
-GET  api/v1/users/me/
+    GET  api/v1/users/me/
 ```
 
 #### Пример ответа
@@ -195,7 +214,7 @@ GET  api/v1/users/me/
 ### Просмотр списка пользователей
 #### Endpoint
 ```
-GET  api/v1/users/
+    GET  api/v1/users/
 ```
 
 #### Пример ответа.
@@ -216,17 +235,3 @@ GET  api/v1/users/
     ]
 }
 ```
-
-## Основная логика
-В основе логики шаблонизатора лежит создание готовых word документов на основе шаблона. Шаблон создается по определенным правилам и хранится на сервере в виде docx файлов. В шаблонах предусмотрены возможности дополнительных обработок вводимых пользователем данных (склонения по падежам, доп форматирование и др), более подробно об этом можно глянуть в инструкции([ссылка](https://github.com/document-template-engine/demo-repository/files/13055545/_._._.docx)). На данном этабе шаблон и его поля создаются администратором. Система регистрации и авторизации построена на основе djoser, с некоторыми модификациями
-
-Невторизированный пользователь имеет возможность:
-  - просмотреть список всех доступных шаблонов базы /api/templates/
-  - скачать шаблон документа /api/templates/{id}/download_draft/
-  - сформировать превью документа на основе шаблона и предоставляемых данных полей и скачать его (без сохранения на сервере)  /api/templates/{id}/download_preview/
-Авторизованный пользователь имеет возможность:
-  - формировать документы на основании выбранного шаблона и предоставленных данных и сохранять документы на сервере
-  - скачивать сохраненные документы в формате docx /api/documents/{id}/download_dpcument/
-  - добавлять шаблоны или документы в избранное
-  - доступ к документам и данным отдельных документов имеет только администратор или автор документа
-

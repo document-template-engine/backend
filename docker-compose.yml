@@ -15,7 +15,6 @@ services:
 
   backend:
     build: ./backend/
-    command: ["commands/app.sh"]
     env_file: .env
     volumes:
       - static:/app/static/
@@ -25,11 +24,13 @@ services:
 
   frontend:
     image: documents23/document-template-engine_frontend:latest
+    env_file: .env
+    command: cp -r /app/build/. /static/
     volumes:
-      - ./frontend/:/app/result_build/
+      - static:/static
 
   gateway:
-    build: ./nginx/
+    build: ./gateway/
     env_file: .env
     ports:
       - 9000:80
