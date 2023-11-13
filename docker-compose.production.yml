@@ -35,7 +35,7 @@ services:
     image: documents23/document-template-engine_gateway:latest
     env_file: .env
     ports:
-      - 8088:80
+      - 9000:80
     volumes:
       - static:/staticfiles/
       - media:/app/media/
