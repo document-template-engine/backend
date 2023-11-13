@@ -89,6 +89,7 @@
 ```
     python manage.py init_field_types
     python manage.py init_templates
+
 ```
 
 ## Запуск докер контейнеров на локальной машине:
