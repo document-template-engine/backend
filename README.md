@@ -76,6 +76,7 @@ python manage.py createsuperuser
 ### Добавить темлейтов в базу:
 ```
 cd backend
+python manage.py init_field_types
 python manage.py init_templates
 ```
 
