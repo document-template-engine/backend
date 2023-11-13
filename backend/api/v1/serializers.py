@@ -1,10 +1,9 @@
 """Сериализаторы для API."""
-
+from django.core.files.base import ContentFile
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from djoser.serializers import UserSerializer
 from rest_framework import serializers
-
 
 from core.constants import Messages
 from documents.models import (
@@ -13,12 +12,22 @@ from documents.models import (
     DocumentField,
     FavDocument,
     FavTemplate,
-    FieldToDocument,
     Template,
     TemplateField,
 )
 
 User = get_user_model()
+
+
+class Base64ImageField(serializers.ImageField):
+    def to_internal_value(self, data):
+        if isinstance(data, str) and data.startswith("data:image"):
+            format, imgstr = data.split(";base64,")
+            ext = format.split("/")[-1]
+
+            data = ContentFile(base64.b64decode(imgstr), name="temp." + ext)
+
+        return super().to_internal_value(data)
 
 
 class TemplateFieldSerializer(serializers.ModelSerializer):
@@ -30,16 +39,72 @@ class TemplateFieldSerializer(serializers.ModelSerializer):
     group_name = serializers.StringRelatedField(
         source="group.name", read_only=True
     )
+    type = serializers.SlugRelatedField(slug_field="type", read_only=True)
+    mask = serializers.CharField(source="type.mask", read_only=True)
 
     class Meta:
         model = TemplateField
-        fields = ("id", "tag", "name", "hint", "group_id", "group_name")
+        fields = (
+            "id",
+            "tag",
+            "name",
+            "hint",
+            "group_id",
+            "group_name",
+            "type",
+            "mask",
+            "length",
+        )
+
+
+class TemplateFieldSerializerMinified(serializers.ModelSerializer):
+    """Сериализатор поля шаблона сокращенный (без полей группы)"""
+
+    type = serializers.SlugRelatedField(slug_field="type", read_only=True)
+    mask = serializers.CharField(source="type.mask", read_only=True)
+
+    class Meta:
+        model = TemplateField
+        fields = (
+            "id",
+            "tag",
+            "name",
+            "hint",
+            "type",
+            "mask",
+            "length",
+        )
+
+
+class TemplateGroupSerializer(serializers.ModelSerializer):
+    """Сериализатор группы полей шаблона"""
+
+    fields = TemplateFieldSerializerMinified(
+        read_only=True,
+        many=True,
+        # source="fields",
+        allow_empty=True,
+    )
+
+    class Meta:
+        model = TemplateField
+        fields = (
+            "id",
+            "name",
+            "fields",
+        )
+
+    def to_representation(self, instance):
+        response = super().to_representation(instance)
+        response["fields"].sort(key=lambda x: x["id"])
+        return response
 
 
 class TemplateSerializerMinified(serializers.ModelSerializer):
     """Сериализатор шаблонов сокращенный."""
 
     is_favorited = serializers.SerializerMethodField()
+    image = Base64ImageField(required=True, allow_null=True)
 
     class Meta:
         model = Template
@@ -48,6 +113,7 @@ class TemplateSerializerMinified(serializers.ModelSerializer):
             "name",
             "category",
             "owner",
+            "image",
             "modified",
             "deleted",
             "description",
@@ -63,8 +129,8 @@ class TemplateSerializerMinified(serializers.ModelSerializer):
         ).exists()
 
 
-class TemplateSerializer(TemplateSerializerMinified):
-    """Сериализатор шаблона."""
+class TemplateSerializerPlain(TemplateSerializerMinified):
+    """Сериализатор шаблона (без вложенности полей в группы)."""
 
     fields = TemplateFieldSerializer(
         read_only=True,
@@ -80,6 +146,35 @@ class TemplateSerializer(TemplateSerializerMinified):
         read_only_fields = ("is_favorited",)
 
 
+class TemplateSerializer(TemplateSerializerMinified):
+    """Сериализатор шаблона (поля сгруппированы внутри grouped_fields)."""
+
+    grouped_fields = TemplateGroupSerializer(
+        read_only=True,
+        many=True,
+        source="field_groups",
+        allow_empty=True,
+    )
+    ungrouped_fields = serializers.SerializerMethodField()
+
+    class Meta(TemplateSerializerMinified.Meta):
+        model = Template
+        exclude = ("template",)
+        read_only_fields = (
+            "is_favorited",
+            "grouped_fields",
+            "ungrouped_fields",
+        )
+
+    def get_ungrouped_fields(self, instance):
+        solo_fields = instance.fields.filter(group=None).order_by("id")
+        return TemplateFieldSerializerMinified(solo_fields, many=True).data
+
+    def to_representation(self, instance):
+        response = super().to_representation(instance)
+        response["grouped_fields"].sort(key=lambda x: x["id"])
+        return response
+
 
 class DocumentFieldSerializer(serializers.ModelSerializer):
     """Сериализатор поля документов."""
@@ -88,13 +183,12 @@ class DocumentFieldSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DocumentField
-        fields = "__all__"
+        exclude = ("document",)
 
 
-class DocumentReadSerializer(serializers.ModelSerializer):
-    """Сериализатор документов."""
+class DocumentReadSerializerMinified(serializers.ModelSerializer):
+    """Сериализатор документов сокращенный (без информации о полях)"""
 
-    document_fields = DocumentFieldSerializer(many=True)
     is_favorited = serializers.SerializerMethodField()
 
     class Meta:
@@ -107,7 +201,6 @@ class DocumentReadSerializer(serializers.ModelSerializer):
             "description",
             "template",
             "owner",
-            "document_fields",
             "is_favorited",
         )
 
@@ -118,6 +211,67 @@ class DocumentReadSerializer(serializers.ModelSerializer):
         return FavDocument.objects.filter(
             user=user, document=document
         ).exists()
+
+
+class DocumentReadSerializerExtended(serializers.ModelSerializer):
+    """Сериализатор документов расширенный (с информацией полей шаблона)."""
+
+    grouped_fields = TemplateGroupSerializer(
+        read_only=True,
+        many=True,
+        source="template.field_groups",
+        allow_empty=True,
+    )
+    ungrouped_fields = serializers.SerializerMethodField()
+    is_favorited = serializers.SerializerMethodField()
+    template = TemplateSerializerMinified(read_only=True)
+
+    class Meta:
+        model = Document
+        fields = (
+            "id",
+            "created",
+            "updated",
+            "completed",
+            "description",
+            "template",
+            "owner",
+            "is_favorited",
+            "grouped_fields",
+            "ungrouped_fields",
+        )
+
+    def get_is_favorited(self, document: Document) -> bool:
+        user = self.context.get("request").user
+        if not user.is_authenticated:
+            return False
+        return FavDocument.objects.filter(
+            user=user, document=document
+        ).exists()
+
+    def get_ungrouped_fields(self, instance):
+        solo_fields = instance.template.fields.filter(group=None).order_by(
+            "id"
+        )
+        return TemplateFieldSerializerMinified(solo_fields, many=True).data
+
+    def to_representation(self, instance):
+        response = super().to_representation(instance)
+        response["grouped_fields"].sort(key=lambda x: x["id"])
+        # add field values
+        field_vals = {}
+        for document_field in instance.document_fields.all():
+            field_vals[document_field.field.id] = document_field.value
+        for group in response["grouped_fields"]:
+            for field in group["fields"]:
+                id = field.get("id")
+                if id in field_vals:
+                    field["value"] = field_vals[id]
+        for field in response["ungrouped_fields"]:
+            id = field.get("id")
+            if id in field_vals:
+                field["value"] = field_vals[id]
+        return response
 
 
 class DocumentWriteSerializer(serializers.ModelSerializer):
@@ -138,39 +292,26 @@ class DocumentWriteSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def create(self, validated_data):
-        """Пока говно код. Создание документа и полей документа"""
+        """Создание документа и полей документа"""
         document_fields = validated_data.pop("document_fields")
         document = Document.objects.create(**validated_data)
-        for data in document_fields:
-            field = data["field"]
-            template = TemplateField.objects.get(id=field.id).template
-            if (
-                document.template == template
-            ):  # Эту проверку надо в валидатор засунуть. Проверяется, принадлежит ли поле выбраному шаблону
-                field = DocumentField.objects.create(
-                    field=field, value=data["value"]
-                )
-                FieldToDocument.objects.create(fields=field, document=document)
+        document.create_document_fields(document_fields)
         return document
 
     @transaction.atomic
     def update(self, instance, validated_data):
-        """Пока говно код. Обновление документа и полей документа"""
+        """Обновление документа и полей документа"""
         document_fields = validated_data.pop("document_fields")
         Document.objects.filter(id=instance.id).update(**validated_data)
         document = Document.objects.get(id=instance.id)
-        FieldToDocument.objects.filter(document=document).delete()
-        for data in document_fields:
-            field = data["field"]
-            template = TemplateField.objects.get(id=field.id).template
-            if (
-                document.template == template
-            ):  # Эту проверку надо в валидатор засунуть. Проверяется, принадлежит ли поле выбраному шаблону
-                field = DocumentField.objects.create(
-                    field=data["field"], value=data["value"]
-                )
-                FieldToDocument.objects.create(fields=field, document=document)
+        document.document_fields.all().delete()
+        document.create_document_fields(document_fields)
         return instance
+
+    def to_representation(self, instance):
+        return DocumentReadSerializerMinified(
+            instance, context={"request": self.context.get("request")}
+        ).data
 
 
 class FavTemplateSerializer(serializers.ModelSerializer):
@@ -208,7 +349,6 @@ class DocumentFieldForPreviewSerializer(serializers.ModelSerializer):
             )
         return template_field
 
-    
 
 class CustomUserSerializer(UserSerializer):
     password = serializers.CharField(write_only=True)

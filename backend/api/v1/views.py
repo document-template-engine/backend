@@ -1,32 +1,36 @@
-from io import BytesIO
+"""Вьюсеты v1 API."""
+import io
+import os
 import subprocess
 import tempfile
 from pathlib import Path
 
+import aspose.words as aw
+from django.contrib.auth import get_user_model
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, serializers, status, views, viewsets, generics
+from rest_framework import (
+    filters,
+    generics,
+    serializers,
+    status,
+    views,
+    viewsets,
+)
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.contrib.auth import get_user_model
 
-from rest_framework_simplejwt.tokens import RefreshToken
-from .utils import Util
-from django.contrib.sites.shortcuts import get_current_site
-from django.urls import reverse
-
-from .utils import Util
-from .permissions import IsOwnerOrAdminOrReadOnly
-from .serializers import (
-    CustomUserSerializer,
+from api.v1.permissions import IsOwner, IsOwnerOrAdminOrReadOnly
+from api.v1.serializers import (
     CategorySerializer,
     DocumentFieldForPreviewSerializer,
     DocumentFieldSerializer,
-    DocumentReadSerializer,
+    DocumentReadSerializerMinified,
+    DocumentReadSerializerExtended,
     DocumentWriteSerializer,
     FavDocumentSerializer,
     FavTemplateSerializer,
@@ -34,19 +38,20 @@ from .serializers import (
     TemplateSerializer,
     TemplateSerializerMinified,
 )
+
+# from api.v1.utils import Util
 from core.constants import Messages
 from core.template_render import DocumentTemplate
 from documents.models import (
     Category,
     Document,
-    DocumentField,
     FavDocument,
     FavTemplate,
-    FieldToDocument,
     Template,
 )
 
 User = get_user_model()
+
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
@@ -56,7 +61,6 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
 def send_file(filestream, filename: str, as_attachment: bool = True):
     """Функция подготовки открытого двоичного файла к отправке."""
-
     response = FileResponse(
         streaming_content=filestream,
         as_attachment=True,
@@ -99,11 +103,15 @@ class TemplateViewSet(viewsets.ModelViewSet):
 
     @action(
         detail=True,
+        methods=["get"],
         permission_classes=(AllowAny,),
-        url_path=r"download_draft",
+        url_path="download_draft",
+        url_name="download_draft",
     )
     def download_draft(self, request, pk=None):
-        template = get_object_or_404(Template, id=pk)
+        template = serializers.PrimaryKeyRelatedField(
+            many=False, queryset=Template.objects.all()
+        ).to_internal_value(data=pk)
         context = {field.tag: field.name for field in template.fields.all()}
         path = template.template
         doc = DocumentTemplate(path)
@@ -145,9 +153,10 @@ class DocumentViewSet(viewsets.ModelViewSet):
     """Документ."""
 
     queryset = Document.objects.all()
-    serializer_class = DocumentReadSerializer
+    serializer_class = DocumentReadSerializerMinified
     http_method_names = ("get", "post", "patch", "delete")
-    permissions_classes = (IsAuthenticated,)
+    # permissions_classes = (IsAuthenticated,)
+    permissions_classes = (AllowAny,)
     filter_backends = (
         filters.SearchFilter,
         filters.OrderingFilter,
@@ -159,14 +168,20 @@ class DocumentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Выдаем только список документов текущего пользователя."""
+        #ЗАглушка
         if self.request.user.is_authenticated:
             return self.request.user.documents
+        else:
+            user = User.objects.get(id=1)
+            return Document.objects.filter(owner=user)
         return Document.objects.none()
 
     def get_serializer_class(self):
         """Выбор сериализатора."""
-        if self.action in ["list", "retrieve"]:
-            return DocumentReadSerializer
+        if self.action == "retrieve":
+            return DocumentReadSerializerExtended
+        elif self.action == "list":
+            return DocumentReadSerializerMinified
         return DocumentWriteSerializer
 
     def perform_create(self, serializer):
@@ -175,7 +190,8 @@ class DocumentViewSet(viewsets.ModelViewSet):
     @action(
         detail=False,
         permission_classes=[
-            IsAuthenticated,
+            # IsAuthenticated,
+            AllowAny,
         ],
         url_path=r"draft",
     )
@@ -183,7 +199,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
         """Возвращает список незаконченных документов/черновиков"""
         user = self.request.user
         queryset = Document.objects.filter(completed=False, owner=user)
-        serializer = DocumentReadSerializer(
+        serializer = DocumentReadSerializerMinified(
             queryset, many=True, context={"request": request}
         )
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -199,7 +215,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
         """Возвращает список законченных документов/история"""
         user = self.request.user
         queryset = Document.objects.filter(completed=True, owner=user)
-        serializer = DocumentReadSerializer(
+        serializer = DocumentReadSerializerMinified(
             queryset, many=True, context={"request": request}
         )
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -213,9 +229,9 @@ class DocumentViewSet(viewsets.ModelViewSet):
         """Скачивание готового документа."""
         document = get_object_or_404(Document, id=pk)
         context = dict()
-        for docfield in FieldToDocument.objects.filter(document=document):
-            template_field = docfield.fields.field
-            context[template_field.tag] = docfield.fields.value
+        for docfield in document.document_fields.all():
+            template_field = docfield.field
+            context[template_field.tag] = docfield.value
         context_default = {
             field.tag: field.name for field in document.template.fields.all()
         }
@@ -240,42 +256,62 @@ class DocumentViewSet(viewsets.ModelViewSet):
             )
             subprocess.run([
                 "soffice",
-                 "--headless",
-                 "--invisible",
-                 "--nologo",
-                 "--convert-to",
-                 "pdf",
-                 "--outdir",
-                 outfile.parent,
-                 outfile.absolute(),
+                "--headless",
+                "--invisible",
+                "--nologo",
+                "--convert-to",
+                "pdf",
+                "--outdir",
+                outfile.parent,
+                outfile.absolute(),
             ])
         newfile = outfile.with_suffix(".pdf")
-        buffer = BytesIO(newfile.read_bytes())
+        buffer = io.BytesIO(newfile.read_bytes())
         response = send_file(buffer, newfile.name)
         return response
             
+    @action(
+        detail=True,
+        permission_classes=[IsOwner],
+    )
+    def download_pdf_aspose(self, request, pk=None):
+        """Скачивание pdf-файла."""
+        document = get_object_or_404(Document, id=pk, owner=request.user)
+        docx_stream = io.BytesIO(
+            b"".join(self.download_document(request, pk).streaming_content)
+        )
+        docx_file = aw.Document(docx_stream)
+        buffer = io.BytesIO()
+        docx_file.save(buffer, aw.SaveFormat.PDF)
+        buffer.seek(0, os.SEEK_SET)
+        response = send_file(buffer, f"{document.template.name}.pdf")
+        return response
+
 
 class DocumentFieldViewSet(viewsets.ModelViewSet):
     """Поле шаблона."""
 
     serializer_class = DocumentFieldSerializer
     http_method_names = ("get",)
-    permissions_classes = (IsAuthenticated,)
+    # permissions_classes = (IsAuthenticated,)
+    permissions_classes = (AllowAny,)
     pagination_class = None
 
     def get_queryset(self):
         document_id = self.kwargs.get("document_id")
         document = get_object_or_404(Document, id=document_id)
-        if (
-            not (self.request.user.is_authenticated)
-            or document.owner != self.request.user
-        ):
-            raise PermissionDenied()
-        through_set = FieldToDocument.objects.filter(document=document).all()
-        return DocumentField.objects.filter(fieldtodocument__in=through_set)
+        #ЗАглушка
+        # if (
+        #     not (self.request.user.is_authenticated)
+        #     or document.owner != self.request.user
+        # ):
+        #     raise PermissionDenied()
+        return document.document_fields.objects.all()
 
 
 class FavTemplateAPIview(APIView):
+    permission_classes = (IsAuthenticated,)
+
     def post(self, request, **kwargs):
         data = {
             "user": self.request.user.pk,
@@ -301,14 +337,14 @@ class FavTemplateAPIview(APIView):
         )
         # проверка, что такой FavTemplate существует в БД
         if not queryset.exists():
-            raise serializers.ValidationError(
-                "Этот шаблон отсутствует в Избранном!"
-            )
+            return Response(status=status.HTTP_404_NOT_FOUND)
         queryset.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class FavDocumentAPIview(APIView):
+    permission_classes = (IsAuthenticated,)
+
     def post(self, request, **kwargs):
         data = {
             "user": self.request.user.pk,
@@ -334,9 +370,7 @@ class FavDocumentAPIview(APIView):
         )
         # проверка, что такой FavDocument существует в БД
         if not queryset.exists():
-            raise serializers.ValidationError(
-                "Этот документ отсутствует в Избранном!"
-            )
+            return Response(status=status.HTTP_404_NOT_FOUND)
         queryset.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -366,26 +400,30 @@ class AnonymousDownloadPreviewAPIView(views.APIView):
         return response
 
 
+# class RegisterView(generics.GenericAPIView):
+#     serializer_class = CustomUserSerializer
 
-class RegisterView(generics.GenericAPIView):
+#     def post(self, request):
+#         user = request.data
+#         serializer = self.serializer_class(data=user)
+#         serializer.is_valid(raise_exception=True)
+#         serializer.save()
+#         user_data = serializer.data
+#         user = User.objects.get(email=user_data["email"])
+#         token = RefreshToken.for_user(user).access_token
 
-    serializer_class = CustomUserSerializer
+#         absurl = "https://documents-template.site/" + "?token=" + str(token)
+#         email_body = (
+#             "Hi "
+#             + user.username
+#             + " Use the link below to verify your email \n"
+#             + absurl
+#         )
+#         data = {
+#             "email_body": email_body,
+#             "to_email": user.email,
+#             "email_subject": "Verify your email",
+#         }
 
-    def post(self, request):
-        user = request.data
-        serializer = self.serializer_class(data=user)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        user_data = serializer.data
-        user = User.objects.get(email=user_data['email'])
-        token = RefreshToken.for_user(user).access_token
-
-        absurl = 'https://documents-template.site/'+"?token="+str(token)
-        email_body = 'Hi '+user.username + \
-            ' Use the link below to verify your email \n' + absurl
-        data = {'email_body': email_body, 'to_email': user.email,
-                'email_subject': 'Verify your email'}
-
-        Util.send_email(data)
-        return Response(user_data, status=status.HTTP_201_CREATED)
-    
+#         Util.send_email(data)
+#         return Response(user_data, status=status.HTTP_201_CREATED)

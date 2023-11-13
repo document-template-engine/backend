@@ -9,9 +9,7 @@ RUN apt-get install -y ttf-mscorefonts-installer
 WORKDIR /app
 
 COPY requirements.txt .
-
 RUN pip install -r requirements.txt --no-cache-dir
 
 COPY . .
-
-RUN chmod a+x commands/app.sh
+CMD ["gunicorn", "--bind", "0.0.0.0:9000", "backend.wsgi"]

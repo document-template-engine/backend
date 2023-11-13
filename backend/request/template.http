@@ -1,6 +1,7 @@
-@TOKEN = Token 77435c1657026635eda41cb962fb9d39d4054e17
+@TOKEN = Token 640063c217c9693de37f04d65249f35a19705efb
 # @URL = https://documents-template.site/
-@URL = http://localhost:8000/
+@URL = http://localhost:8000
+
 
 ### Все шаблоны
 GET {{URL}}/api/templates/ 
