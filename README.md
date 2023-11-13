@@ -110,8 +110,8 @@
 
 ### Выполнить Собрать статику Django:
 ```
-    sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic
-    sudo docker compose -f docker-compose.production.yml exec backend cp -r /app/collected_static/. /app/static/
+    sudo docker compose  exec backend python manage.py collectstatic
+    sudo docker compose  exec backend cp -r /app/collected_static/. /app/static/
 ```
 
 ## Запуск докер контейнеров на удаленной машине:
@@ -128,7 +128,7 @@
 
 ### Выполнить миграции:
 ```
-    docker compose -f docker-compose.production.yml exec backend python manage.py migrate
+    sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate
 ```
 
 ### Выполнить миграции:
@@ -136,8 +136,15 @@
     docker compose -f docker-compose.production.yml exec backend python manage.py createsuperuser
 ```
 
+### Выполнить Собрать статику Django:
+```
+    sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic
+    sudo docker compose -f docker-compose.production.yml exec backend cp -r /app/collected_static/. /app/static/
+```
+
 ### Выполнить миграции:
 ```
+    sudo docker compose -f docker-compose.production.yml exec backend python manage.py init_field_types
     sudo docker compose -f docker-compose.production.yml exec backend python manage.py init_templates
 ```
 
