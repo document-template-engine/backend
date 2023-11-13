@@ -1,6 +1,9 @@
 """Вьюсеты v1 API."""
 import io
 import os
+import subprocess
+import tempfile
+from pathlib import Path
 
 import aspose.words as aw
 from django.contrib.auth import get_user_model
@@ -56,7 +59,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
     permissions_classes = (AllowAny,)
 
 
-def send_file(filestream, filename: str):
+def send_file(filestream, filename: str, as_attachment: bool = True):
     """Функция подготовки открытого двоичного файла к отправке."""
     response = FileResponse(
         streaming_content=filestream,
@@ -223,8 +226,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
         url_path=r"download_document",
     )
     def download_document(self, request, pk=None):
-        """Скачивание готового документа"""
-
+        """Скачивание готового документа."""
         document = get_object_or_404(Document, id=pk)
         context = dict()
         for docfield in document.document_fields.all():
@@ -242,9 +244,37 @@ class DocumentViewSet(viewsets.ModelViewSet):
 
     @action(
         detail=True,
-        permission_classes=[IsOwner],
+        permissions_classes=[IsAuthenticated],
+        url_path="download_pdf",
     )
     def download_pdf(self, request, pk=None):
+        """Генерация и выдача на скачивание pdf-файла."""
+        with tempfile.NamedTemporaryFile() as output:
+            outfile = Path(output.name).resolve()
+            outfile.write_bytes(
+                b''.join(self.download_document(request, pk).streaming_content)
+            )
+            subprocess.run([
+                "soffice",
+                "--headless",
+                "--invisible",
+                "--nologo",
+                "--convert-to",
+                "pdf",
+                "--outdir",
+                outfile.parent,
+                outfile.absolute(),
+            ])
+        newfile = outfile.with_suffix(".pdf")
+        buffer = io.BytesIO(newfile.read_bytes())
+        response = send_file(buffer, newfile.name)
+        return response
+            
+    @action(
+        detail=True,
+        permission_classes=[IsOwner],
+    )
+    def download_pdf_aspose(self, request, pk=None):
         """Скачивание pdf-файла."""
         document = get_object_or_404(Document, id=pk, owner=request.user)
         docx_stream = io.BytesIO(
