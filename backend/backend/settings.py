@@ -30,7 +30,7 @@ INSTALLED_APPS = [
     "api",
     "users",
     "documents",
-    "colorfield",
+    "colorfield",  # wtf ?
     "core",
 ]
 

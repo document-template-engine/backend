@@ -1,9 +1,12 @@
 """Модели документов."""
+from typing import Dict, List, Tuple
+
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
 
 from core.constants import Messages
+from core.template_render import DocumentTemplate
 
 User = get_user_model()
 
@@ -78,6 +81,45 @@ class Template(models.Model):
                 except Exception as e:
                     print(e)
         return super().save(*args, **kwargs)
+
+    def get_inconsistent_tags(self) -> Tuple[Tuple, Tuple]:
+        """
+        Возвращает списки несогласованных тэгов между БД и шаблоном docx.
+
+        :returns: (excess_tags, excess_fields)
+        excess_tags - кортеж тэгов, которые имеются в docx, но отсутствуют в БД.
+        excess_fields - кортеж тэгов, которые имеются в БД, но отсутствуют в docx.
+        """
+        docx_tags, field_tags = set(), set()
+        if self.template:
+            try:
+                doc = DocumentTemplate(self.template)
+                docx_tags = set(doc.get_tags())
+            except Exception as e:
+                print(e)  # TODO: add logging
+
+        field_tags = {field.tag for field in self.fields.all()}
+        excess_tags = tuple(docx_tags - field_tags)
+        excess_fields = tuple(field_tags - docx_tags)
+        return (excess_tags, excess_fields)
+
+    def get_consistency_errors(self) -> List:
+        """Генерирует ответ в зависимости от согласованности полей шаблона."""
+
+        excess_tags, excess_fields = self.get_inconsistent_tags()
+        errors = []
+        if excess_tags:
+            errors.append(
+                {"message": Messages.TEMPLATE_EXCESS_TAGS, "tags": excess_tags}
+            )
+        if excess_fields:
+            errors.append(
+                {
+                    "message": Messages.TEMPLATE_EXCESS_FIELDS,
+                    "tags": excess_fields,
+                }
+            )
+        return errors
 
 
 class TemplateFieldGroup(models.Model):

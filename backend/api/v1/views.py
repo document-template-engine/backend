@@ -4,6 +4,7 @@ import os
 import subprocess
 import tempfile
 from pathlib import Path
+from typing import Dict, List
 
 import aspose.words as aw
 from django.contrib.auth import get_user_model
@@ -20,23 +21,25 @@ from rest_framework import (
 )
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api.v1.permissions import IsOwner, IsOwnerOrAdminOrReadOnly
-from api.v1.serializers import (
+from .permissions import IsAdminOrReadOnly, IsOwner, IsOwnerOrAdminOrReadOnly
+from .serializers import (
     CategorySerializer,
     DocumentFieldForPreviewSerializer,
     DocumentFieldSerializer,
-    DocumentReadSerializerMinified,
     DocumentReadSerializerExtended,
+    DocumentReadSerializerMinified,
     DocumentWriteSerializer,
     FavDocumentSerializer,
     FavTemplateSerializer,
     TemplateFieldSerializer,
+    TemplateFileUploadSerializer,
     TemplateSerializer,
     TemplateSerializerMinified,
+    TemplateWriteSerializer,
 )
 
 # from api.v1.utils import Util
@@ -56,7 +59,7 @@ User = get_user_model()
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permissions_classes = (AllowAny,)
+    permission_classes = (AllowAny,)
 
 
 def send_file(filestream, filename: str, as_attachment: bool = True):
@@ -73,8 +76,8 @@ class TemplateViewSet(viewsets.ModelViewSet):
     """Шаблон."""
 
     serializer_class = TemplateSerializer
-    http_method_names = ("get", "delete")
-    permissions_classes = (AllowAny,)
+    http_method_names = ("get", "delete", "post")
+    permission_classes = (IsAdminOrReadOnly,)  # AllowAny
     filter_backends = (
         DjangoFilterBackend,
         filters.SearchFilter,
@@ -93,6 +96,8 @@ class TemplateViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == "list":
             return TemplateSerializerMinified
+        elif self.action == "create":
+            return TemplateWriteSerializer
         return TemplateSerializer
 
     def get_queryset(self):
@@ -140,7 +145,7 @@ class TemplateFieldViewSet(viewsets.ModelViewSet):
 
     serializer_class = TemplateFieldSerializer
     http_method_names = ("get",)
-    permissions_classes = (AllowAny,)
+    permission_classes = (AllowAny,)
     pagination_class = None
 
     def get_queryset(self):
@@ -155,8 +160,8 @@ class DocumentViewSet(viewsets.ModelViewSet):
     queryset = Document.objects.all()
     serializer_class = DocumentReadSerializerMinified
     http_method_names = ("get", "post", "patch", "delete")
-    # permissions_classes = (IsAuthenticated,)
-    permissions_classes = (AllowAny,)
+    # permission_classes = (IsAuthenticated,)
+    permission_classes = (AllowAny,)
     filter_backends = (
         filters.SearchFilter,
         filters.OrderingFilter,
@@ -168,7 +173,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Выдаем только список документов текущего пользователя."""
-        #ЗАглушка
+        # ЗАглушка
         if self.request.user.is_authenticated:
             return self.request.user.documents
         else:
@@ -244,7 +249,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
 
     @action(
         detail=True,
-        permissions_classes=[IsAuthenticated],
+        permission_classes=[IsAuthenticated],
         url_path="download_pdf",
     )
     def download_pdf(self, request, pk=None):
@@ -252,24 +257,26 @@ class DocumentViewSet(viewsets.ModelViewSet):
         with tempfile.NamedTemporaryFile() as output:
             outfile = Path(output.name).resolve()
             outfile.write_bytes(
-                b''.join(self.download_document(request, pk).streaming_content)
+                b"".join(self.download_document(request, pk).streaming_content)
             )
-            subprocess.run([
-                "soffice",
-                "--headless",
-                "--invisible",
-                "--nologo",
-                "--convert-to",
-                "pdf",
-                "--outdir",
-                outfile.parent,
-                outfile.absolute(),
-            ])
+            subprocess.run(
+                [
+                    "soffice",
+                    "--headless",
+                    "--invisible",
+                    "--nologo",
+                    "--convert-to",
+                    "pdf",
+                    "--outdir",
+                    outfile.parent,
+                    outfile.absolute(),
+                ]
+            )
         newfile = outfile.with_suffix(".pdf")
         buffer = io.BytesIO(newfile.read_bytes())
         response = send_file(buffer, newfile.name)
         return response
-            
+
     @action(
         detail=True,
         permission_classes=[IsOwner],
@@ -293,14 +300,14 @@ class DocumentFieldViewSet(viewsets.ModelViewSet):
 
     serializer_class = DocumentFieldSerializer
     http_method_names = ("get",)
-    # permissions_classes = (IsAuthenticated,)
-    permissions_classes = (AllowAny,)
+    # permission_classes = (IsAuthenticated,)
+    permission_classes = (AllowAny,)
     pagination_class = None
 
     def get_queryset(self):
         document_id = self.kwargs.get("document_id")
         document = get_object_or_404(Document, id=document_id)
-        #ЗАглушка
+        # ЗАглушка
         # if (
         #     not (self.request.user.is_authenticated)
         #     or document.owner != self.request.user
@@ -398,6 +405,66 @@ class AnonymousDownloadPreviewAPIView(views.APIView):
         buffer = doc.get_partial(context, context_default)
         response = send_file(buffer, f"{template.name}_preview.docx")
         return response
+
+
+class CheckTemplateConsistencyAPIView(views.APIView):
+    permission_classes = (AllowAny,)  # isAdmin
+
+    def get(self, request, template_id):
+        template = get_object_or_404(Template, id=template_id)
+        errors = template.get_consistency_errors()
+        if errors:
+            return Response(
+                data={"result": Messages.TEMPLATE_CONSISTENT},
+                status=status.HTTP_200_OK,
+            )
+        return Response(data={"errors": errors}, status=status.HTTP_200_OK)
+
+
+class UploadTemplateFileAPIView(generics.UpdateAPIView):
+    queryset = Template.objects.all()
+    serializer_class = TemplateFileUploadSerializer
+    lookup_field = "id"
+    lookup_url_kwarg = "template_id"
+    permission_classes = (IsAdminUser,)
+    http_method_names = ["patch", "put"]
+
+    # class UploadTemplateFileAPIView(views.APIView):
+    #     serializer
+    #     permission_classes = (AllowAny,)  # isAdmin
+
+    #     def post(self, request, template_id):
+    #         serializer = TemplateFileUploadSerializer(data=request.data)
+    #         if serializer.is_valid():
+    #             print(serializer.validated_data)
+    #             # Process the uploaded file here
+    #             # Save it to the server or perform any required operations
+    #             return Response({"message": "File uploaded successfully"})
+    #         else:
+    #             return Response(
+    #                 serializer.errors, status=status.HTTP_400_BAD_REQUEST
+    #             )
+
+    # template = get_object_or_404(Template, id=template_id)
+    # excess_tags, excess_fields = template.get_inconsistent_tags()
+    # if not excess_tags and not excess_fields:
+    #     return Response(
+    #         data={"result": Messages.TEMPLATE_CONSISTENT},
+    #         status=status.HTTP_200_OK,
+    #     )
+    # context = {"errors": []}
+    # if excess_tags:
+    #     context["errors"].append(
+    #         {"message": Messages.TEMPLATE_EXCESS_TAGS, "tags": excess_tags}
+    #     )
+    # if excess_fields:
+    #     context["errors"].append(
+    #         {
+    #             "message": Messages.TEMPLATE_EXCESS_FIELDS,
+    #             "tags": excess_fields,
+    #         }
+    #     )
+    # return Response(data=context, status=status.HTTP_200_OK)
 
 
 # class RegisterView(generics.GenericAPIView):

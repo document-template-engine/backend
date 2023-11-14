@@ -1,10 +1,12 @@
 """Сериализаторы для API."""
-from django.core.files.base import ContentFile
 from django.contrib.auth import get_user_model
+from django.core.files.base import ContentFile
 from django.db import transaction
 from djoser.serializers import UserSerializer
-from rest_framework import serializers
+from rest_framework import serializers, status
+from rest_framework.response import Response
 
+from .utils import get_non_unique_items
 from core.constants import Messages
 from documents.models import (
     Category,
@@ -14,6 +16,8 @@ from documents.models import (
     FavTemplate,
     Template,
     TemplateField,
+    TemplateFieldGroup,
+    TemplateFieldType,
 )
 
 User = get_user_model()
@@ -57,6 +61,26 @@ class TemplateFieldSerializer(serializers.ModelSerializer):
         )
 
 
+class TemplateFieldWriteSerializer(serializers.ModelSerializer):
+    """Сериализатор поля шаблона для записи/обновления"""
+
+    type = serializers.SlugRelatedField(
+        queryset=TemplateFieldType.objects.all(), slug_field="type"
+    )
+    group = serializers.IntegerField(required=False)
+
+    class Meta:
+        model = TemplateField
+        fields = (
+            "tag",
+            "name",
+            "hint",
+            "group",
+            "type",
+            "length",
+        )
+
+
 class TemplateFieldSerializerMinified(serializers.ModelSerializer):
     """Сериализатор поля шаблона сокращенный (без полей группы)"""
 
@@ -74,6 +98,14 @@ class TemplateFieldSerializerMinified(serializers.ModelSerializer):
             "mask",
             "length",
         )
+
+
+class TemplateGroupSerializerMinified(serializers.ModelSerializer):
+    """Сериализатор группы полей шаблона без вложенных полей"""
+
+    class Meta:
+        model = TemplateFieldGroup
+        fields = ("id", "name")
 
 
 class TemplateGroupSerializer(serializers.ModelSerializer):
@@ -98,6 +130,19 @@ class TemplateGroupSerializer(serializers.ModelSerializer):
         response = super().to_representation(instance)
         response["fields"].sort(key=lambda x: x["id"])
         return response
+
+
+class TemplateGroupWriteSerializer(serializers.ModelSerializer):
+    """Сериализатор группы полей шаблона для записи/обновления"""
+
+    id = serializers.IntegerField()
+
+    class Meta:
+        model = TemplateFieldGroup
+        fields = (
+            "id",
+            "name",
+        )
 
 
 class TemplateSerializerMinified(serializers.ModelSerializer):
@@ -139,11 +184,18 @@ class TemplateSerializerPlain(TemplateSerializerMinified):
         allow_empty=True,
     )
 
+    groups = TemplateGroupSerializerMinified(
+        source="field_groups",
+        read_only=True,
+        many=True,
+        allow_empty=True,
+    )
+
     class Meta(TemplateSerializerMinified.Meta):
         model = Template
         exclude = ("template",)
         # fields = "__all__"
-        read_only_fields = ("is_favorited",)
+        read_only_fields = ("is_favorited", "groups")
 
 
 class TemplateSerializer(TemplateSerializerMinified):
@@ -174,6 +226,79 @@ class TemplateSerializer(TemplateSerializerMinified):
         response = super().to_representation(instance)
         response["grouped_fields"].sort(key=lambda x: x["id"])
         return response
+
+
+class TemplateWriteSerializer(serializers.ModelSerializer):
+    """Сериализатор шаблонов для записи/изменения."""
+
+    fields = TemplateFieldWriteSerializer(many=True)
+    groups = TemplateGroupWriteSerializer(many=True)
+
+    class Meta:
+        model = Template
+        fields = ("name", "deleted", "description", "fields", "groups")
+
+    def validate(self, data):
+        # проверка, что все поля имеют уникальные тэги
+        data_fields = data.get("fields")
+        field_tags = [f["tag"] for f in data_fields]
+        tags_duplicates = get_non_unique_items(field_tags)
+        if tags_duplicates:
+            raise serializers.ValidationError(
+                detail=Messages.TEMPLATE_FIELD_TAGS_ARE_NOT_UNIQUE.format(
+                    tags_duplicates
+                )
+            )
+
+        # проверка, что все группы имеют уникальный id
+        data_groups = data.get("groups")
+        group_ids = [g["id"] for g in data_groups]
+        ids_duplicates = get_non_unique_items(group_ids)
+        if ids_duplicates:
+            raise serializers.ValidationError(
+                detail=Messages.TEMPLATE_GROUP_IDS_ARE_NOT_UNIQUE.format(
+                    ids_duplicates
+                )
+            )
+
+        # проверка, что поля шаблона привязаны к описанным группам в group
+        field_groups = set([f.get("group") for f in data_fields])
+        if None in field_groups:
+            field_groups.discard(None)
+        unknown_groups = field_groups - set(group_ids)
+        if unknown_groups:
+            raise serializers.ValidationError(
+                detail=Messages.UNKNOWN_GROUP_ID.format(unknown_groups)
+            )
+        return data
+
+    def create(self, data):
+        data_fields = data.pop("fields")
+        data_groups = data.pop("groups")
+        template = Template.objects.create(**data)
+        # создание групп
+        data_groups.sort(key=lambda x: x["id"])
+        group_models = {}
+        for group in data_groups:
+            model = TemplateFieldGroup.objects.create(
+                name=group["name"], template=template
+            )
+            group_models[group["id"]] = model
+        # создание полей
+        template_fields = []
+        for data in data_fields:
+            group_id = data["group"]
+            if group_id:
+                data["group"] = group_models[group_id]
+            template_fields.append(TemplateField(template=template, **data))
+        TemplateField.objects.bulk_create(template_fields)
+        return template
+
+    def to_representation(self, instance):
+        request = self.context.get("request")
+        return TemplateSerializerPlain(
+            instance, context={"request": request}
+        ).data
 
 
 class DocumentFieldSerializer(serializers.ModelSerializer):
@@ -348,6 +473,17 @@ class DocumentFieldForPreviewSerializer(serializers.ModelSerializer):
                 Messages.WRONG_TEMPLATE_FIELD.format(template_field.id)
             )
         return template_field
+
+
+class TemplateFileUploadSerializer(serializers.ModelSerializer):
+    errors = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Template
+        fields = ("template", "errors")
+
+    def get_errors(self, instance):
+        return instance.get_consistency_errors()
 
 
 class CustomUserSerializer(UserSerializer):
