@@ -428,43 +428,6 @@ class UploadTemplateFileAPIView(generics.UpdateAPIView):
     permission_classes = (IsAdminUser,)
     http_method_names = ["patch", "put"]
 
-    # class UploadTemplateFileAPIView(views.APIView):
-    #     serializer
-    #     permission_classes = (AllowAny,)  # isAdmin
-
-    #     def post(self, request, template_id):
-    #         serializer = TemplateFileUploadSerializer(data=request.data)
-    #         if serializer.is_valid():
-    #             print(serializer.validated_data)
-    #             # Process the uploaded file here
-    #             # Save it to the server or perform any required operations
-    #             return Response({"message": "File uploaded successfully"})
-    #         else:
-    #             return Response(
-    #                 serializer.errors, status=status.HTTP_400_BAD_REQUEST
-    #             )
-
-    # template = get_object_or_404(Template, id=template_id)
-    # excess_tags, excess_fields = template.get_inconsistent_tags()
-    # if not excess_tags and not excess_fields:
-    #     return Response(
-    #         data={"result": Messages.TEMPLATE_CONSISTENT},
-    #         status=status.HTTP_200_OK,
-    #     )
-    # context = {"errors": []}
-    # if excess_tags:
-    #     context["errors"].append(
-    #         {"message": Messages.TEMPLATE_EXCESS_TAGS, "tags": excess_tags}
-    #     )
-    # if excess_fields:
-    #     context["errors"].append(
-    #         {
-    #             "message": Messages.TEMPLATE_EXCESS_FIELDS,
-    #             "tags": excess_fields,
-    #         }
-    #     )
-    # return Response(data=context, status=status.HTTP_200_OK)
-
 
 # class RegisterView(generics.GenericAPIView):
 #     serializer_class = CustomUserSerializer
