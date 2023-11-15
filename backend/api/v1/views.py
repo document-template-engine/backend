@@ -4,7 +4,6 @@ import os
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Dict, List
 
 import aspose.words as aw
 from django.contrib.auth import get_user_model

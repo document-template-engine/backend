@@ -1,5 +1,5 @@
 """Модели документов."""
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError

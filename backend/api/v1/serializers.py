@@ -1,10 +1,10 @@
 """Сериализаторы для API."""
+import base64
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django.db import transaction
 from djoser.serializers import UserSerializer
-from rest_framework import serializers, status
-from rest_framework.response import Response
+from rest_framework import serializers
 
 from .utils import get_non_unique_items
 from core.constants import Messages
