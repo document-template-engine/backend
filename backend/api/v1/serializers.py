@@ -460,11 +460,11 @@ class CategorySerializer(serializers.ModelSerializer):
 class DocumentFieldForPreviewSerializer(serializers.ModelSerializer):
     """Сериализатор для полей превью документа."""
 
-    description = serializers.CharField(required=False, max_length=200)
+    # description = serializers.CharField(required=False, max_length=200)
 
     class Meta:
         model = DocumentField
-        fields = "__all__"
+        fields = ("field", "value")
 
     def validate_field(self, template_field):
         template_fields = self.context.get("template_fields", set())
