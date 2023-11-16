@@ -5,7 +5,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-import aspose.words as aw
+# import aspose.words as aw
 from django.contrib.auth import get_user_model
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
@@ -276,22 +276,22 @@ class DocumentViewSet(viewsets.ModelViewSet):
         response = send_file(buffer, newfile.name)
         return response
 
-    @action(
-        detail=True,
-        permission_classes=[IsOwner],
-    )
-    def download_pdf_aspose(self, request, pk=None):
-        """Скачивание pdf-файла."""
-        document = get_object_or_404(Document, id=pk, owner=request.user)
-        docx_stream = io.BytesIO(
-            b"".join(self.download_document(request, pk).streaming_content)
-        )
-        docx_file = aw.Document(docx_stream)
-        buffer = io.BytesIO()
-        docx_file.save(buffer, aw.SaveFormat.PDF)
-        buffer.seek(0, os.SEEK_SET)
-        response = send_file(buffer, f"{document.template.name}.pdf")
-        return response
+    # @action(
+    #     detail=True,
+    #     permission_classes=[IsOwner],
+    # )
+    # def download_pdf_aspose(self, request, pk=None):
+    #     """Скачивание pdf-файла."""
+    #     document = get_object_or_404(Document, id=pk, owner=request.user)
+    #     docx_stream = io.BytesIO(
+    #         b"".join(self.download_document(request, pk).streaming_content)
+    #     )
+    #     docx_file = aw.Document(docx_stream)
+    #     buffer = io.BytesIO()
+    #     docx_file.save(buffer, aw.SaveFormat.PDF)
+    #     buffer.seek(0, os.SEEK_SET)
+    #     response = send_file(buffer, f"{document.template.name}.pdf")
+    #     return response
 
 
 class DocumentFieldViewSet(viewsets.ModelViewSet):

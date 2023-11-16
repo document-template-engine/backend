@@ -1,5 +1,5 @@
 asgiref==3.7.2
-aspose-words==23.10.0
+# aspose-words==23.10.0
 atomicwrites==1.4.1
 attrs==23.1.0
 Babel==2.13.0
