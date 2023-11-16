@@ -30,7 +30,7 @@ INSTALLED_APPS = [
     "api",
     "users",
     "documents",
-    "colorfield",
+    "colorfield",  # wtf ?
     "core",
 ]
 
@@ -117,8 +117,7 @@ STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "collected_static"
 
 STATICFILES_DIRS = ((BASE_DIR / "static/"),)
-
-INITIAL_DATA_DIR = BASE_DIR / "data"
+INITIAL_DATA_DIR = BASE_DIR / "static/data/"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = "/app/media"

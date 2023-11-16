@@ -1,11 +1,13 @@
 from api.v1.views import (
     AnonymousDownloadPreviewAPIView,
+    CheckTemplateConsistencyAPIView,
     DocumentFieldViewSet,
     DocumentViewSet,
     TemplateFieldViewSet,
     TemplateViewSet,
     FavTemplateAPIview,
     FavDocumentAPIview,
+    UploadTemplateFileAPIView,
     # RegisterView,
 )
 from django.urls import include, path, re_path
@@ -51,6 +53,16 @@ urlpatterns = [
         r"^templates/(?P<template_id>[0-9]+)/download_preview/$",
         AnonymousDownloadPreviewAPIView.as_view(),
         name="download_preview",
+    ),
+    re_path(
+        r"^templates/(?P<template_id>[0-9]+)/check_consistency/$",
+        CheckTemplateConsistencyAPIView.as_view(),
+        name="check_consistency",
+    ),
+    re_path(
+        r"^templates/(?P<template_id>[0-9]+)/upload_template/$",
+        UploadTemplateFileAPIView.as_view(),
+        name="upload_template",
     ),
     # path("users/", RegisterView.as_view(), name="register"),
     path("", include(router_v1.urls)),

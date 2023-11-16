@@ -42,3 +42,17 @@ class Messages:
     FILE_NOT_FOUND: Final = "Файл '{}' не найден."
     UNKNOWN_GROUP_ID: Final = "Ошибка: неизвестный идентификатор группы '{}'"
     UNKNOWN_TYPE: Final = "Ошибка: неизвестный тип поля '{}'"
+
+    TEMPLATE_EXCESS_TAGS: Final = (
+        "Шаблон содержит тэги, для которых отсутствуют поля в базе"
+    )
+    TEMPLATE_EXCESS_FIELDS: Final = (
+        "В шаблоне отсутствуют тэги, для которых имеются поля в базе"
+    )
+    TEMPLATE_CONSISTENT: Final = "Шаблон и поля согласованы"
+    TEMPLATE_FIELD_TAGS_ARE_NOT_UNIQUE: Final = (
+        "Поля шаблона содержат неуникальные теги {}"
+    )
+    TEMPLATE_GROUP_IDS_ARE_NOT_UNIQUE: Final = (
+        "Группы полей шаблона содержат неуникальные идентификаторы id {}"
+    )

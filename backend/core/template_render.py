@@ -295,7 +295,7 @@ class DocumentTemplate:
                 start_run = None
 
     def prepare_template(self):
-        """Подгтотовка шаблона к использованию (объединение прогонов)"""
+        """Подготовка шаблона к использованию (объединение прогонов)"""
         self._template.init_docx()
         docx = self._template.docx
         tag_style = docx.styles[self.TAG_STYLE_NAME]
