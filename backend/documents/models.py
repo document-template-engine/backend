@@ -46,11 +46,15 @@ class Template(models.Model):
         null=True,
         blank=True,
     )
-    template = models.FileField(upload_to="templates/")
+    template = models.FileField(
+        upload_to="templates/", verbose_name="Файл шаблона"
+    )
     name = models.CharField(
         max_length=255, verbose_name="Наименование шаблона"
     )
-    modified = models.DateField(verbose_name="Дата модификации", auto_now=True)
+    updated = models.DateTimeField(
+        verbose_name="Дата изменения", auto_now=True
+    )
     deleted = models.BooleanField(verbose_name="Удален")
     description = models.TextField(verbose_name="Описание шаблона")
     image = models.ImageField(

@@ -67,7 +67,7 @@ class TemplateFieldWriteSerializer(serializers.ModelSerializer):
     type = serializers.SlugRelatedField(
         queryset=TemplateFieldType.objects.all(), slug_field="type"
     )
-    group = serializers.IntegerField(required=False)
+    group = serializers.IntegerField(required=False, default=None)
 
     class Meta:
         model = TemplateField
@@ -287,7 +287,7 @@ class TemplateWriteSerializer(serializers.ModelSerializer):
         # создание полей
         template_fields = []
         for data in data_fields:
-            group_id = data["group"]
+            group_id = data.get("group")
             if group_id:
                 data["group"] = group_models[group_id]
             template_fields.append(TemplateField(template=template, **data))
