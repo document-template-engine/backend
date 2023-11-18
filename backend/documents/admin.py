@@ -44,13 +44,13 @@ class TemplateAdmin(admin.ModelAdmin):
         "owner",
         "category",
         "template",
-        "modified",
+        "updated",
         "deleted",
         "description",
         "image",
     )
     list_filter = ("owner", "category", "deleted")
-    readonly_fields = ("id",)
+    readonly_fields = ("id", "updated")
     inlines = (TemplateFieldInlineAdmin,)
 
     def get_form(self, request, instance=None, **kwargs):
