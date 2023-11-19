@@ -418,7 +418,7 @@ class DocumentWriteSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def create(self, validated_data):
         """Создание документа и полей документа"""
-        document_fields = validated_data.pop("document_fields")
+        document_fields = validated_data.pop("document_fields", None)
         document = Document.objects.create(**validated_data)
         document.create_document_fields(document_fields)
         return document
@@ -426,12 +426,13 @@ class DocumentWriteSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def update(self, instance, validated_data):
         """Обновление документа и полей документа"""
-        document_fields = validated_data.pop("document_fields")
+        document_fields = validated_data.pop("document_fields", None)
         Document.objects.filter(id=instance.id).update(**validated_data)
         document = Document.objects.get(id=instance.id)
-        document.document_fields.all().delete()
-        document.create_document_fields(document_fields)
-        return instance
+        if document_fields is not None:
+            document.document_fields.all().delete()
+            document.create_document_fields(document_fields)
+        return document
 
     def to_representation(self, instance):
         return DocumentReadSerializerMinified(
