@@ -1,11 +1,8 @@
 """Вьюсеты v1 API."""
 import io
 import os
-import subprocess
-import tempfile
 from pathlib import Path
 
-import aspose.words as aw
 from django.contrib.auth import get_user_model
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
@@ -42,6 +39,7 @@ from .serializers import (
 )
 
 # from api.v1.utils import Util
+from api.v1 import utils as v1utils
 from core.constants import Messages
 from core.template_render import DocumentTemplate
 from documents.models import (
@@ -232,17 +230,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
     def download_document(self, request, pk=None):
         """Скачивание готового документа."""
         document = get_object_or_404(Document, id=pk)
-        context = dict()
-        for docfield in document.document_fields.all():
-            template_field = docfield.field
-            context[template_field.tag] = docfield.value
-        context_default = {
-            field.tag: field.name for field in document.template.fields.all()
-        }
-
-        path = document.template.template
-        doc = DocumentTemplate(path)
-        buffer = doc.get_partial(context, context_default)
+        buffer = v1utils.fill_docx_template_for_document(document)
         response = send_file(buffer, f"{document.template.name}.docx")
         return response
 
@@ -253,43 +241,8 @@ class DocumentViewSet(viewsets.ModelViewSet):
     )
     def download_pdf(self, request, pk=None):
         """Генерация и выдача на скачивание pdf-файла."""
-        with tempfile.NamedTemporaryFile() as output:
-            outfile = Path(output.name).resolve()
-            outfile.write_bytes(
-                b"".join(self.download_document(request, pk).streaming_content)
-            )
-            subprocess.run(
-                [
-                    "soffice",
-                    "--headless",
-                    "--invisible",
-                    "--nologo",
-                    "--convert-to",
-                    "pdf",
-                    "--outdir",
-                    outfile.parent,
-                    outfile.absolute(),
-                ]
-            )
-        newfile = outfile.with_suffix(".pdf")
-        buffer = io.BytesIO(newfile.read_bytes())
-        response = send_file(buffer, newfile.name)
-        return response
-
-    @action(
-        detail=True,
-        permission_classes=[IsOwner],
-    )
-    def download_pdf_aspose(self, request, pk=None):
-        """Скачивание pdf-файла."""
-        document = get_object_or_404(Document, id=pk, owner=request.user)
-        docx_stream = io.BytesIO(
-            b"".join(self.download_document(request, pk).streaming_content)
-        )
-        docx_file = aw.Document(docx_stream)
-        buffer = io.BytesIO()
-        docx_file.save(buffer, aw.SaveFormat.PDF)
-        buffer.seek(0, os.SEEK_SET)
+        document = get_object_or_404(Document, pk=pk)
+        buffer = v1utils.create_document_pdf_for_export(document)
         response = send_file(buffer, f"{document.template.name}.pdf")
         return response
 
