@@ -53,13 +53,12 @@ def fill_docx_template_for_document(document: Document) -> io.BytesIO:
 def create_document_pdf_for_export(document: Document) -> io.BytesIO:
     """Создание pdf-файла."""
     doc_file = fill_docx_template_for_document(document)
-    pdf_file = convert_file_to_pdf(doc_file)
-    buffer = io.BytesIO(pdf_file.read_bytes())
+    buffer = convert_file_to_pdf(doc_file)
     return buffer
 
 
-def convert_file_to_pdf(in_file: io.BytesIO) -> pathlib.Path:
-    """Файл в двоичном виде конвертируем в pdf и возвращаем путь до него."""
+def convert_file_to_pdf(in_file: io.BytesIO) -> io.BytesIO:
+    """Файл в виде строки байт преобразуем в строку байт pdf-файла."""
     with tempfile.NamedTemporaryFile() as output:
         out_file = pathlib.Path(output.name).resolve()
         out_file.write_bytes(in_file.getvalue())
@@ -78,4 +77,6 @@ def convert_file_to_pdf(in_file: io.BytesIO) -> pathlib.Path:
             check=True,
         )
         pdf_file = out_file.with_suffix(".pdf")
-    return pdf_file
+        out_buffer = pdf_file.read_bytes()
+        pdf_file.unlink(missing_ok=True)
+    return out_buffer
