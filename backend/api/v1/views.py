@@ -375,11 +375,12 @@ class CheckTemplateConsistencyAPIView(views.APIView):
         template = get_object_or_404(Template, id=template_id)
         errors = template.get_consistency_errors()
         if errors:
+            return Response(data={"errors": errors}, status=status.HTTP_200_OK)
+        else:
             return Response(
                 data={"result": Messages.TEMPLATE_CONSISTENT},
                 status=status.HTTP_200_OK,
             )
-        return Response(data={"errors": errors}, status=status.HTTP_200_OK)
 
 
 class UploadTemplateFileAPIView(generics.UpdateAPIView):

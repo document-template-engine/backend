@@ -39,6 +39,7 @@ class Messages:
     TEMPLATE_LOAD_FINISHED: Final = (
         "Загрузка завершена. Загружено {} шаблонов."
     )
+    TEMPLATE_JSON_CORRUPTED: Final = "Ошибка в структуре json файла '{}'"
     FILE_NOT_FOUND: Final = "Файл '{}' не найден."
     UNKNOWN_GROUP_ID: Final = "Ошибка: неизвестный идентификатор группы '{}'"
     UNKNOWN_TYPE: Final = "Ошибка: неизвестный тип поля '{}'"
