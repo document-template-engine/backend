@@ -7,6 +7,7 @@ from django.core.management import BaseCommand
 
 from backend.settings import INITIAL_DATA_DIR
 
+from api.v1.serializers import TemplateWriteSerializer
 from core.constants import Messages
 from documents.models import (
     Template,
@@ -16,6 +17,10 @@ from documents.models import (
 )
 
 TEMPLATE_LIST_SOURCE_FILE: str = "template_list.json"
+
+
+def print_red(s):
+    print("\033[31m{}\033[0m".format(s))
 
 
 def create_field_groups(
@@ -58,38 +63,56 @@ def create_template_fields(
 
 
 def load_template(docx_file_name, json_file_name):
+    print("\n")
     print(Messages.TEMPLATE_LOADING.format(docx_file_name))
     if not os.path.isfile(docx_file_name):
-        print(Messages.FILE_NOT_FOUND.format(docx_file_name))
+        print_red(Messages.FILE_NOT_FOUND.format(docx_file_name))
         return 0
     if not os.path.isfile(json_file_name):
-        print(Messages.FILE_NOT_FOUND.format(json_file_name))
+        print_red(Messages.FILE_NOT_FOUND.format(json_file_name))
         return 0
     with open(json_file_name, encoding="utf-8") as jsonfile:
-        context = json.load(jsonfile)
-        fields = context.pop("fields")
-        groups_list = context.pop("groups")
-        name = context.get("name")
+        try:
+            context = json.load(jsonfile)
+        except Exception as e:
+            print_red(Messages.TEMPLATE_JSON_CORRUPTED.format(json_file_name))
+            print(e)
+            return 0
+
         new_docx_name = context.pop("template")
+        name = context.get("name", None)
         qs = Template.objects.filter(name=name)
         if qs.exists():
             print(Messages.TEMPLATE_ALREADY_EXISTS.format(name), end="")
             choice = input()
             if choice == "1":
-                qs.delete()
+                try:
+                    qs.delete()
+                except Exception as e:
+                    print("Error at template delete operation!")
+                    print(e)
             elif choice != "2":
                 return 0
         try:
-            template = Template(template="", **context)
-            template.save()
+            serializer = TemplateWriteSerializer(data=context)
+            if not serializer.is_valid():
+                print_red(
+                    Messages.TEMPLATE_JSON_CORRUPTED.format(json_file_name)
+                )
+                print_red(serializer.errors)
+                return 0
+            template = serializer.save()
             with open(docx_file_name, "rb") as f:
                 template.template.save(new_docx_name, File(f))
+
+            # проверка консистентности загруженных полей и шаблона docx
+            errors = template.get_consistency_errors()
+            if errors:
+                print_red("Ошибки в шаблоне\n", errors)
         except Exception as e:
-            print("Error for data {}".format(context))
-            print(e)
+            print_red("Error for data {}".format(context))
+            print_red(e)
             return 0
-        field_groups = create_field_groups(groups_list, template)
-        create_template_fields(fields, template, field_groups)
         print(Messages.TEMPLATE_LOADED.format(docx_file_name))
         return 1
 
