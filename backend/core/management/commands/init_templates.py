@@ -19,8 +19,10 @@ from documents.models import (
 TEMPLATE_LIST_SOURCE_FILE: str = "template_list.json"
 
 
-def print_red(s):
-    print("\033[31m{}\033[0m".format(s))
+def print_red(*args):
+    print("\033[31m", end="")
+    print(*args, end="")
+    print("\033[0m")
 
 
 def create_field_groups(
@@ -110,7 +112,8 @@ def load_template(docx_file_name, json_file_name):
             if errors:
                 print_red("Ошибки в шаблоне\n", errors)
         except Exception as e:
-            print_red("Error for data {}".format(context))
+            msg = "Error for data {}".format(json.dumps(context))
+            print_red(msg)
             print_red(e)
             return 0
         print(Messages.TEMPLATE_LOADED.format(docx_file_name))
