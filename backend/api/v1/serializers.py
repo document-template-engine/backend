@@ -68,17 +68,13 @@ class TemplateFieldWriteSerializer(serializers.ModelSerializer):
         queryset=TemplateFieldType.objects.all(), slug_field="type"
     )
     group = serializers.IntegerField(required=False, default=None)
+    default = serializers.CharField(
+        trim_whitespace=False, max_length=255, required=False
+    )
 
     class Meta:
         model = TemplateField
-        fields = (
-            "tag",
-            "name",
-            "hint",
-            "group",
-            "type",
-            "length",
-        )
+        fields = ("tag", "name", "hint", "group", "type", "length", "default")
 
 
 class TemplateFieldSerializerMinified(serializers.ModelSerializer):
@@ -97,6 +93,7 @@ class TemplateFieldSerializerMinified(serializers.ModelSerializer):
             "type",
             "mask",
             "length",
+            "default",
         )
 
 
