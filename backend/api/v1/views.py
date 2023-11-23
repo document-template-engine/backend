@@ -63,7 +63,7 @@ def send_file(filestream, filename: str, as_attachment: bool = True):
     """Функция подготовки открытого двоичного файла к отправке."""
     response = FileResponse(
         streaming_content=filestream,
-        as_attachment=True,
+        as_attachment=as_attachment,
         filename=filename,
     )
     return response
@@ -355,7 +355,8 @@ class AnonymousDownloadPreviewAPIView(views.APIView):
             if data["value"]:  # write only fields with non empty value
                 context[data["field"].tag] = data["value"]
         context_default = {
-            field.tag: field.name for field in template.fields.all()
+            field.tag: field.default or field.name
+            for field in template.fields.all()
         }
         doc = DocumentTemplate(template.template)
         buffer = doc.get_partial(context, context_default)

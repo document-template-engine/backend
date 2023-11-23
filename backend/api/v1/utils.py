@@ -42,7 +42,8 @@ def fill_docx_template_for_document(document: Document) -> io.BytesIO:
         for docfield in document.document_fields.all()
     }
     context_default = {
-        field.tag: field.name for field in document.template.fields.all()
+        field.tag: field.default or field.name
+        for field in document.template.fields.all()
     }
     path = document.template.template
     doc = DocumentTemplate(path)
