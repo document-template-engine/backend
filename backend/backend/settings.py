@@ -149,7 +149,7 @@ DJOSER = {
         "user_list": ["rest_framework.permissions.AllowAny"],
         "user": ["djoser.permissions.CurrentUserOrAdminOrReadOnly"],
     },
-    "HIDE_USERS": False,
+    "HIDE_USERS": True,
     "PASSWORD_RESET_CONFIRM_URL": "#/set_password/{uid}/{token}",
     "SERIALIZERS": {
         "user_create": "api.v1.serializers.CustomUserSerializer",
