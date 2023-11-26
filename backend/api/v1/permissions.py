@@ -49,6 +49,10 @@ class IsAdminOrReadOnly(permissions.BasePermission):
 class IsOwner(permissions.BasePermission):
     """Доступ: только владелец."""
 
+    def has_permission(self, request, view):
+        """Видеть список может только владелец."""
+        return request.user.is_authenticated
+
     def has_object_permission(self, request, view, obj):
         """Под объектом подразумевается Document."""
         return request.user.is_authenticated and obj.owner == request.user
