@@ -111,6 +111,7 @@ class TemplateViewSet(viewsets.ModelViewSet):
         url_name="download_draft",
     )
     def download_draft(self, request, pk=None):
+        # template = get_object_or_404(Template, pk=pk)
         template = serializers.PrimaryKeyRelatedField(
             many=False, queryset=Template.objects.all()
         ).to_internal_value(data=pk)
@@ -254,22 +255,22 @@ class DocumentViewSet(viewsets.ModelViewSet):
 class DocumentFieldViewSet(viewsets.ModelViewSet):
     """Поле шаблона."""
 
+    queryset = Document.objects.all()
     serializer_class = DocumentFieldSerializer
     http_method_names = ("get",)
-    # permission_classes = (IsAuthenticated,)
-    permission_classes = (AllowAny,)
+    permission_classes = (IsAuthenticated,)
+    # permission_classes = (AllowAny,)
     pagination_class = None
 
     def get_queryset(self):
         document_id = self.kwargs.get("document_id")
         document = get_object_or_404(Document, id=document_id)
-        # ЗАглушка
-        # if (
-        #     not (self.request.user.is_authenticated)
-        #     or document.owner != self.request.user
-        # ):
-        #     raise PermissionDenied()
-        return document.document_fields.objects.all()
+        if (
+            not self.request.user.is_staff
+            and document.owner != self.request.user
+        ):
+            raise PermissionDenied()
+        return document.document_fields.all()
 
 
 class FavTemplateAPIview(APIView):
