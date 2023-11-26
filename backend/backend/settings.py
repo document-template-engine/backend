@@ -117,6 +117,7 @@ STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "collected_static"
 
 STATICFILES_DIRS = ((BASE_DIR / "static/"),)
+# INITIAL_DATA_DIR = BASE_DIR / "data/"  # for local run
 INITIAL_DATA_DIR = BASE_DIR / "static/data/"
 
 MEDIA_URL = "/media/"
@@ -148,11 +149,12 @@ DJOSER = {
         "user_list": ["rest_framework.permissions.AllowAny"],
         "user": ["djoser.permissions.CurrentUserOrAdminOrReadOnly"],
     },
-    "HIDE_USERS": False,
+    "HIDE_USERS": True,
     "PASSWORD_RESET_CONFIRM_URL": "#/set_password/{uid}/{token}",
     "SERIALIZERS": {
         "user_create": "api.v1.serializers.CustomUserSerializer",
         "user": "api.v1.serializers.CustomUserSerializer",
+        "current_user": "api.v1.serializers.CustomUserSerializer",
     },
     "SENDACTIVATIONEMAIL": True,
     "ACTIVATION_URL": "#activation/{uid}/{token}",

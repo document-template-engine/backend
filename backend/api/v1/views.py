@@ -24,7 +24,7 @@ from rest_framework.views import APIView
 from .permissions import IsAdminOrReadOnly, IsOwner, IsOwnerOrAdminOrReadOnly
 from .serializers import (
     CategorySerializer,
-    DocumentFieldForPreviewSerializer,
+    DocumentFieldWriteSerializer,
     DocumentFieldSerializer,
     DocumentReadSerializerExtended,
     DocumentReadSerializerMinified,
@@ -63,7 +63,7 @@ def send_file(filestream, filename: str, as_attachment: bool = True):
     """Функция подготовки открытого двоичного файла к отправке."""
     response = FileResponse(
         streaming_content=filestream,
-        as_attachment=True,
+        as_attachment=as_attachment,
         filename=filename,
     )
     return response
@@ -111,6 +111,7 @@ class TemplateViewSet(viewsets.ModelViewSet):
         url_name="download_draft",
     )
     def download_draft(self, request, pk=None):
+        # template = get_object_or_404(Template, pk=pk)
         template = serializers.PrimaryKeyRelatedField(
             many=False, queryset=Template.objects.all()
         ).to_internal_value(data=pk)
@@ -254,22 +255,22 @@ class DocumentViewSet(viewsets.ModelViewSet):
 class DocumentFieldViewSet(viewsets.ModelViewSet):
     """Поле шаблона."""
 
+    queryset = Document.objects.all()
     serializer_class = DocumentFieldSerializer
     http_method_names = ("get",)
-    # permission_classes = (IsAuthenticated,)
-    permission_classes = (AllowAny,)
+    permission_classes = (IsAuthenticated,)
+    # permission_classes = (AllowAny,)
     pagination_class = None
 
     def get_queryset(self):
         document_id = self.kwargs.get("document_id")
         document = get_object_or_404(Document, id=document_id)
-        # ЗАглушка
-        # if (
-        #     not (self.request.user.is_authenticated)
-        #     or document.owner != self.request.user
-        # ):
-        #     raise PermissionDenied()
-        return document.document_fields.objects.all()
+        if (
+            not self.request.user.is_staff
+            and document.owner != self.request.user
+        ):
+            raise PermissionDenied()
+        return document.document_fields.all()
 
 
 class FavTemplateAPIview(APIView):
@@ -344,18 +345,20 @@ class AnonymousDownloadPreviewAPIView(views.APIView):
     def post(self, request, template_id):
         template = get_object_or_404(Template, id=template_id)
         document_fields = request.data.get("document_fields")
-        serializer = DocumentFieldForPreviewSerializer(
+        serializer = DocumentFieldWriteSerializer(
             data=document_fields,
             context={"template_fields": set(template.fields.all())},
             many=True,
         )
         serializer.is_valid(raise_exception=True)
+        v1utils.custom_fieldtypes_validation(serializer.validated_data)
         context = {}
         for data in serializer.validated_data:
             if data["value"]:  # write only fields with non empty value
                 context[data["field"].tag] = data["value"]
         context_default = {
-            field.tag: field.name for field in template.fields.all()
+            field.tag: field.default or field.name
+            for field in template.fields.all()
         }
         doc = DocumentTemplate(template.template)
         buffer = doc.get_partial(context, context_default)
@@ -375,11 +378,12 @@ class CheckTemplateConsistencyAPIView(views.APIView):
         template = get_object_or_404(Template, id=template_id)
         errors = template.get_consistency_errors()
         if errors:
+            return Response(data={"errors": errors}, status=status.HTTP_200_OK)
+        else:
             return Response(
                 data={"result": Messages.TEMPLATE_CONSISTENT},
                 status=status.HTTP_200_OK,
             )
-        return Response(data={"errors": errors}, status=status.HTTP_200_OK)
 
 
 class UploadTemplateFileAPIView(generics.UpdateAPIView):

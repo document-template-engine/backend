@@ -1,4 +1,5 @@
 """Настройки админки для приложения "Документы"."""
+from django import forms
 from django.contrib import admin
 
 from documents import models
@@ -36,6 +37,12 @@ class TemplateFieldInlineAdmin(admin.TabularInline):
             )
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        formfield = super().formfield_for_dbfield(db_field, request, **kwargs)
+        if db_field.name == "default":
+            formfield.strip = False
+        return formfield
+
 
 @admin.register(models.Template)
 class TemplateAdmin(admin.ModelAdmin):
@@ -72,6 +79,17 @@ class TemplateFieldTypeAdmin(admin.ModelAdmin):
     search_fields = ("name",)
 
 
+class TemplateFieldForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # allow space for default value
+        self.fields["default"].strip = False
+
+    class Meta:
+        model = models.TemplateField
+        fields = "__all__"
+
+
 @admin.register(models.TemplateField)
 class TemplateFieldAdmin(admin.ModelAdmin):
     list_display = (
@@ -87,6 +105,8 @@ class TemplateFieldAdmin(admin.ModelAdmin):
     list_filter = ("template",)
     readonly_fields = ("id",)
     search_fields = ("name",)
+
+    form = TemplateFieldForm
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "group":
