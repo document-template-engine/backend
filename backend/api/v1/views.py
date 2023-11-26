@@ -24,7 +24,7 @@ from rest_framework.views import APIView
 from .permissions import IsAdminOrReadOnly, IsOwner, IsOwnerOrAdminOrReadOnly
 from .serializers import (
     CategorySerializer,
-    DocumentFieldForPreviewSerializer,
+    DocumentFieldWriteSerializer,
     DocumentFieldSerializer,
     DocumentReadSerializerExtended,
     DocumentReadSerializerMinified,
@@ -344,12 +344,13 @@ class AnonymousDownloadPreviewAPIView(views.APIView):
     def post(self, request, template_id):
         template = get_object_or_404(Template, id=template_id)
         document_fields = request.data.get("document_fields")
-        serializer = DocumentFieldForPreviewSerializer(
+        serializer = DocumentFieldWriteSerializer(
             data=document_fields,
             context={"template_fields": set(template.fields.all())},
             many=True,
         )
         serializer.is_valid(raise_exception=True)
+        v1utils.custom_fieldtypes_validation(serializer.validated_data)
         context = {}
         for data in serializer.validated_data:
             if data["value"]:  # write only fields with non empty value
