@@ -6,7 +6,7 @@ from django.db import transaction
 from djoser.serializers import UserSerializer
 from rest_framework import serializers
 
-from .utils import get_non_unique_items
+from .utils import custom_fieldtypes_validation, get_non_unique_items
 from core.constants import Messages
 from documents.models import (
     Category,
@@ -308,6 +308,24 @@ class DocumentFieldSerializer(serializers.ModelSerializer):
         exclude = ("document",)
 
 
+class DocumentFieldWriteSerializer(serializers.ModelSerializer):
+    """Сериализатор для полей документа или превью шаблона."""
+
+    # description = serializers.CharField(required=False, max_length=200)
+
+    class Meta:
+        model = DocumentField
+        fields = ("field", "value")
+
+    def validate_field(self, template_field):
+        template_fields = self.context.get("template_fields", set())
+        if template_field not in template_fields:
+            raise serializers.ValidationError(
+                Messages.WRONG_TEMPLATE_FIELD.format(template_field.id)
+            )
+        return template_field
+
+
 class DocumentReadSerializerMinified(serializers.ModelSerializer):
     """Сериализатор документов сокращенный (без информации о полях)"""
 
@@ -417,6 +435,7 @@ class DocumentWriteSerializer(serializers.ModelSerializer):
         """Создание документа и полей документа"""
         document_fields = validated_data.pop("document_fields", None)
         document = Document.objects.create(**validated_data)
+        custom_fieldtypes_validation(document_fields)
         document.create_document_fields(document_fields)
         return document
 
@@ -427,6 +446,7 @@ class DocumentWriteSerializer(serializers.ModelSerializer):
         Document.objects.filter(id=instance.id).update(**validated_data)
         document = Document.objects.get(id=instance.id)
         if document_fields is not None:
+            custom_fieldtypes_validation(document_fields)
             document.document_fields.all().delete()
             document.create_document_fields(document_fields)
         return document
@@ -453,24 +473,6 @@ class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = "__all__"
-
-
-class DocumentFieldForPreviewSerializer(serializers.ModelSerializer):
-    """Сериализатор для полей превью документа."""
-
-    # description = serializers.CharField(required=False, max_length=200)
-
-    class Meta:
-        model = DocumentField
-        fields = ("field", "value")
-
-    def validate_field(self, template_field):
-        template_fields = self.context.get("template_fields", set())
-        if template_field not in template_fields:
-            raise serializers.ValidationError(
-                Messages.WRONG_TEMPLATE_FIELD.format(template_field.id)
-            )
-        return template_field
 
 
 class TemplateFileUploadSerializer(serializers.ModelSerializer):

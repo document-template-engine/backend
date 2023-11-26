@@ -1,14 +1,15 @@
 """Утилиты."""
 
+import datetime
 import io
 import pathlib
 import subprocess
 import tempfile
-from typing import Any, List, Set
+from typing import Any, Dict, List, Set, Union
 
 from django.core.mail import send_mail
 
-from documents.models import Document, DocumentTemplate
+from documents.models import Document, DocumentTemplate, TemplateField
 
 
 class Util:
@@ -81,3 +82,24 @@ def convert_file_to_pdf(in_file: io.BytesIO) -> io.BytesIO:
         out_buffer = pdf_file.read_bytes()
         pdf_file.unlink(missing_ok=True)
     return out_buffer
+
+
+def date_iso_to_ddmmyyyy(value: str):
+    """Преобразует строку из ISO формата в dd.mm.yyyy"""
+    try:
+        date = datetime.date.fromisoformat(value)
+        return date.strftime("%d.%m.%Y")
+    except Exception as e:
+        print(e)  # TODO logging
+        return value
+
+
+def custom_fieldtypes_validation(
+    validated_data: List[Dict[str, Union[TemplateField, str]]]
+):
+    """Валидация полей согласно кастомным типам"""
+    for data in validated_data:
+        field = data["field"]
+        if field.type.type == "date":
+            data["value"] = date_iso_to_ddmmyyyy(data["value"])
+            print("DATE CONVERTED TO ", data["value"])
