@@ -121,8 +121,7 @@ class TemplateViewSet(viewsets.ModelViewSet):
         buffer = doc.get_draft(context)
         filename = f"{template.name}_шаблон.docx"
         if request.query_params.get("pdf"):
-            pdf_file = v1utils.convert_file_to_pdf(buffer)
-            buffer = io.BytesIO(pdf_file.read_bytes())
+            buffer = v1utils.convert_file_to_pdf(buffer)
             filename = f"{template.name}_шаблон.pdf"
         response = send_file(buffer, filename)
         return response
@@ -364,8 +363,7 @@ class AnonymousDownloadPreviewAPIView(views.APIView):
         buffer = doc.get_partial(context, context_default)
         filename = f"{template.name}_preview.docx"
         if request.query_params.get("pdf"):
-            pdf_file = v1utils.convert_file_to_pdf(buffer)
-            buffer = io.BytesIO(pdf_file.read_bytes())
+            buffer = v1utils.convert_file_to_pdf(buffer)
             filename = f"{template.name}_preview.pdf"
         response = send_file(buffer, filename)
         return response
