@@ -79,7 +79,9 @@ def convert_file_to_pdf(in_file: io.BytesIO) -> io.BytesIO:
             check=True,
         )
         pdf_file = out_file.with_suffix(".pdf")
-        out_buffer = pdf_file.read_bytes()
+        out_buffer = io.BytesIO()
+        out_buffer.save(pdf_file.read_bytes())
+        out_buffer.seek(0)
         pdf_file.unlink(missing_ok=True)
     return out_buffer
 
