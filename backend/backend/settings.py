@@ -117,6 +117,7 @@ STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "collected_static"
 
 STATICFILES_DIRS = ((BASE_DIR / "static/"),)
+# INITIAL_DATA_DIR = BASE_DIR / "data/"  # for local run
 INITIAL_DATA_DIR = BASE_DIR / "static/data/"
 
 MEDIA_URL = "/media/"
@@ -148,22 +149,24 @@ DJOSER = {
         "user_list": ["rest_framework.permissions.AllowAny"],
         "user": ["djoser.permissions.CurrentUserOrAdminOrReadOnly"],
     },
-    "HIDE_USERS": False,
+    "HIDE_USERS": True,
     "PASSWORD_RESET_CONFIRM_URL": "#/set_password/{uid}/{token}",
     "SERIALIZERS": {
         "user_create": "api.v1.serializers.CustomUserSerializer",
         "user": "api.v1.serializers.CustomUserSerializer",
+        "current_user": "api.v1.serializers.CustomUserSerializer",
     },
-    "SENDACTIVATIONEMAIL": True,
     "ACTIVATION_URL": "#activation/{uid}/{token}",
+    'SEND_ACTIVATION_EMAIL': True,
+    'ACTIVATION_URL': 'auth/verify/{uid}/{token}/',
 }
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.rambler.ru"
+EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 465
 EMAIL_USE_SSL = True
-EMAIL_HOST_USER = "draftnikox@rambler.ru"
-EMAIL_HOST_PASSWORD = "456852Zx"
+EMAIL_HOST_USER = "nikox12lamba@gmail.com"
+EMAIL_HOST_PASSWORD = "fkzzqiydypuxrfvw"
 
 SWAGGER_SETTINGS = {
     "SECURITY_DEFINITIONS": {

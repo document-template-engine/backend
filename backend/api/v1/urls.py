@@ -26,20 +26,20 @@ router_v1.register(
 
 router_v1.register(
     r"templates/(?P<template_id>[0-9]+)/fields",
-    basename="fields",
+    basename="template_fields",
     viewset=TemplateFieldViewSet,
+)
+
+router_v1.register(
+    r"documents/(?P<document_id>[0-9]+)/fields",
+    basename="document_fields",
+    viewset=DocumentFieldViewSet,
 )
 
 router_v1.register(
     prefix="documents",
     basename="documents",
     viewset=DocumentViewSet,
-)
-
-router_v1.register(
-    r"documents/(?P<document_id>[0-9]+)/fields",
-    basename="fields",
-    viewset=DocumentFieldViewSet,
 )
 
 urlpatterns = [
@@ -49,18 +49,18 @@ urlpatterns = [
     path(
         "documents/<int:document_id>/favorite/", FavDocumentAPIview.as_view()
     ),
-    re_path(
-        r"^templates/(?P<template_id>[0-9]+)/download_preview/$",
+    path(
+        "templates/<int:template_id>/download_preview/",
         AnonymousDownloadPreviewAPIView.as_view(),
         name="download_preview",
     ),
-    re_path(
-        r"^templates/(?P<template_id>[0-9]+)/check_consistency/$",
+    path(
+        "templates/<int:template_id>/check_consistency/",
         CheckTemplateConsistencyAPIView.as_view(),
         name="check_consistency",
     ),
     re_path(
-        r"^templates/(?P<template_id>[0-9]+)/upload_template/$",
+        "templates/<int:template_id>/upload_template/",
         UploadTemplateFileAPIView.as_view(),
         name="upload_template",
     ),

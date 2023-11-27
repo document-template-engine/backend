@@ -203,6 +203,12 @@ class TemplateField(models.Model):
     length = models.PositiveIntegerField(
         blank=True, null=True, verbose_name="Размер поля ввода"
     )
+    default = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="Значение по умолчанию",
+    )
 
     class Meta:
         verbose_name = "Поле шаблона"
@@ -261,7 +267,6 @@ class Document(models.Model):
             template_field = field_data["field"]
             template = TemplateField.objects.get(id=template_field.id).template
             if self.template == template:
-                # Эту проверку надо в валидатор засунуть.
                 # Проверяется, принадлежит ли поле шаблону документа
                 document_fields.append(
                     DocumentField(
