@@ -1,11 +1,10 @@
 """Вьюсеты v1 API."""
 import io
 import os
-import subprocess
-import tempfile
 from pathlib import Path
 
 # import aspose.words as aw
+
 from django.contrib.auth import get_user_model
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
@@ -23,6 +22,7 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from .permissions import IsAdminOrReadOnly, IsOwner, IsOwnerOrAdminOrReadOnly
 from .serializers import (
@@ -39,9 +39,11 @@ from .serializers import (
     TemplateSerializer,
     TemplateSerializerMinified,
     TemplateWriteSerializer,
+    CustomUserSerializer,
 )
 
-# from api.v1.utils import Util
+from api.v1.utils import Util
+from api.v1 import utils as v1utils
 from core.constants import Messages
 from core.template_render import DocumentTemplate
 from documents.models import (
@@ -121,6 +123,10 @@ class TemplateViewSet(viewsets.ModelViewSet):
         doc = DocumentTemplate(path)
         buffer = doc.get_draft(context)
         filename = f"{template.name}_шаблон.docx"
+        if request.query_params.get("pdf"):
+            pdf_file = v1utils.convert_file_to_pdf(buffer)
+            buffer = io.BytesIO(pdf_file.read_bytes())
+            filename = f"{template.name}_шаблон.pdf"
         response = send_file(buffer, filename)
         return response
 
@@ -232,17 +238,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
     def download_document(self, request, pk=None):
         """Скачивание готового документа."""
         document = get_object_or_404(Document, id=pk)
-        context = dict()
-        for docfield in document.document_fields.all():
-            template_field = docfield.field
-            context[template_field.tag] = docfield.value
-        context_default = {
-            field.tag: field.name for field in document.template.fields.all()
-        }
-
-        path = document.template.template
-        doc = DocumentTemplate(path)
-        buffer = doc.get_partial(context, context_default)
+        buffer = v1utils.fill_docx_template_for_document(document)
         response = send_file(buffer, f"{document.template.name}.docx")
         return response
 
@@ -253,45 +249,10 @@ class DocumentViewSet(viewsets.ModelViewSet):
     )
     def download_pdf(self, request, pk=None):
         """Генерация и выдача на скачивание pdf-файла."""
-        with tempfile.NamedTemporaryFile() as output:
-            outfile = Path(output.name).resolve()
-            outfile.write_bytes(
-                b"".join(self.download_document(request, pk).streaming_content)
-            )
-            subprocess.run(
-                [
-                    "soffice",
-                    "--headless",
-                    "--invisible",
-                    "--nologo",
-                    "--convert-to",
-                    "pdf",
-                    "--outdir",
-                    outfile.parent,
-                    outfile.absolute(),
-                ]
-            )
-        newfile = outfile.with_suffix(".pdf")
-        buffer = io.BytesIO(newfile.read_bytes())
-        response = send_file(buffer, newfile.name)
+        document = get_object_or_404(Document, pk=pk)
+        buffer = v1utils.create_document_pdf_for_export(document)
+        response = send_file(buffer, f"{document.template.name}.pdf")
         return response
-
-    # @action(
-    #     detail=True,
-    #     permission_classes=[IsOwner],
-    # )
-    # def download_pdf_aspose(self, request, pk=None):
-    #     """Скачивание pdf-файла."""
-    #     document = get_object_or_404(Document, id=pk, owner=request.user)
-    #     docx_stream = io.BytesIO(
-    #         b"".join(self.download_document(request, pk).streaming_content)
-    #     )
-    #     docx_file = aw.Document(docx_stream)
-    #     buffer = io.BytesIO()
-    #     docx_file.save(buffer, aw.SaveFormat.PDF)
-    #     buffer.seek(0, os.SEEK_SET)
-    #     response = send_file(buffer, f"{document.template.name}.pdf")
-    #     return response
 
 
 class DocumentFieldViewSet(viewsets.ModelViewSet):
@@ -402,7 +363,12 @@ class AnonymousDownloadPreviewAPIView(views.APIView):
         }
         doc = DocumentTemplate(template.template)
         buffer = doc.get_partial(context, context_default)
-        response = send_file(buffer, f"{template.name}_preview.docx")
+        filename = f"{template.name}_preview.docx"
+        if request.query_params.get("pdf"):
+            pdf_file = v1utils.convert_file_to_pdf(buffer)
+            buffer = io.BytesIO(pdf_file.read_bytes())
+            filename = f"{template.name}_preview.pdf"
+        response = send_file(buffer, filename)
         return response
 
 
@@ -428,31 +394,54 @@ class UploadTemplateFileAPIView(generics.UpdateAPIView):
     permission_classes = (IsAdminUser,)
     http_method_names = ["patch", "put"]
 
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes
+from django.urls import reverse_lazy
+from django.views.generic import CreateView, View, TemplateView
 
-# class RegisterView(generics.GenericAPIView):
-#     serializer_class = CustomUserSerializer
+class RegisterView(generics.GenericAPIView):
+    serializer_class = CustomUserSerializer
 
-#     def post(self, request):
-#         user = request.data
-#         serializer = self.serializer_class(data=user)
-#         serializer.is_valid(raise_exception=True)
-#         serializer.save()
-#         user_data = serializer.data
-#         user = User.objects.get(email=user_data["email"])
-#         token = RefreshToken.for_user(user).access_token
+    def post(self, request):
+        user = request.data
+        serializer = self.serializer_class(data=user)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        user_data = serializer.data
+        user = User.objects.get(email=user_data["email"])
+        token = RefreshToken.for_user(user).access_token
+        
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        activation_url = reverse_lazy('confirm_email', kwargs={'uidb64': uid, 'token': token})
+        print(activation_url)
+        absurl = f'http://127.0.0.1:9000/{activation_url}'
+        email_body = (
+            "Hi "
+            + user.username
+            + " Use the link below to verify your email \n"
+            + absurl
+        )
+        print(email_body)
+        data = {
+            "email_body": email_body,
+            "to_email": user.email,
+            "email_subject": "Verify your email",
+        }
 
-#         absurl = "https://documents-template.site/" + "?token=" + str(token)
-#         email_body = (
-#             "Hi "
-#             + user.username
-#             + " Use the link below to verify your email \n"
-#             + absurl
-#         )
-#         data = {
-#             "email_body": email_body,
-#             "to_email": user.email,
-#             "email_subject": "Verify your email",
-#         }
+        Util.send_email(data)
+        return Response(user_data, status=status.HTTP_201_CREATED)
 
-#         Util.send_email(data)
-#         return Response(user_data, status=status.HTTP_201_CREATED)
+from django.contrib.auth.tokens import default_token_generator
+from django.contrib.auth import login
+class UserConfirmEmailView(View):
+    def get(self, request, uidb64, token):
+        try:
+            uid = urlsafe_base64_decode(uidb64)
+            user = User.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            user = None
+
+        if user is not None and default_token_generator.check_token(user, token):
+            user.is_active = True
+            user.save()
+            login(request, user)
