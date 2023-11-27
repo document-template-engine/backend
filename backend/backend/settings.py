@@ -144,7 +144,7 @@ REST_FRAMEWORK = {
 
 DJOSER = {
     "LOGIN_FIELD": "email",
-    "USER_ACTIVATION": "optional",
+    #"USER_ACTIVATION": "optional",
     "PERMISSIONS": {
         "user_list": ["rest_framework.permissions.AllowAny"],
         "user": ["djoser.permissions.CurrentUserOrAdminOrReadOnly"],
@@ -156,8 +156,8 @@ DJOSER = {
         "user": "api.v1.serializers.CustomUserSerializer",
         "current_user": "api.v1.serializers.CustomUserSerializer",
     },
-    "ACTIVATION_URL": "#activation/{uid}/{token}",
-    'SEND_ACTIVATION_EMAIL': True,
+    #"ACTIVATION_URL": "#activation/{uid}/{token}",
+    #'SEND_ACTIVATION_EMAIL': True,
 }
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
