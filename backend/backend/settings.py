@@ -2,6 +2,7 @@
 import os
 from pathlib import Path
 
+import sentry_sdk
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -144,7 +145,7 @@ REST_FRAMEWORK = {
 
 DJOSER = {
     "LOGIN_FIELD": "email",
-    #"USER_ACTIVATION": "optional",
+    # "USER_ACTIVATION": "optional",
     "PERMISSIONS": {
         "user_list": ["rest_framework.permissions.AllowAny"],
         "user": ["djoser.permissions.CurrentUserOrAdminOrReadOnly"],
@@ -156,7 +157,7 @@ DJOSER = {
         "user": "api.v1.serializers.CustomUserSerializer",
         "current_user": "api.v1.serializers.CustomUserSerializer",
     },
-    #"ACTIVATION_URL": "#activation/{uid}/{token}",
+    # "ACTIVATION_URL": "#activation/{uid}/{token}",
     #'SEND_ACTIVATION_EMAIL': True,
 }
 
@@ -173,3 +174,42 @@ SWAGGER_SETTINGS = {
     },
     "BASE_PATH": "https://documents-template.site/api/",
 }
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "console": {"format": "%(name)-12s %(levelname)-8s %(message)s"},
+        "file": {
+            "format": "%(asctime)s %(name)-12s %(levelname)-8s %(message)s"
+        },
+    },
+    "handlers": {
+        "console": {"class": "logging.StreamHandler", "formatter": "console"},
+        "file": {
+            "level": "DEBUG",
+            "class": "logging.FileHandler",
+            "formatter": "file",
+            "filename": "debug.log",
+        },
+    },
+    "loggers": {
+        "": {
+            "level": "DEBUG",
+            "handlers": ["console", "file"],
+            "propagate": True,
+        },
+        "django.request": {"level": "DEBUG", "handlers": ["console", "file"]},
+    },
+}
+
+sentry_sdk.init(
+    dsn="https://be8f804283b7a2e423209e00692792f0@o4506344044298240.ingest.sentry.io/4506344234156032",
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for performance monitoring.
+    traces_sample_rate=1.0,
+    # Set profiles_sample_rate to 1.0 to profile 100%
+    # of sampled transactions.
+    # We recommend adjusting this value in production.
+    profiles_sample_rate=1.0,
+)
