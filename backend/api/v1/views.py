@@ -387,7 +387,7 @@ class AnonymousDownloadPreviewAPIView(views.APIView):
         if request.query_params.get("pdf"):
             buffer = v1utils.convert_file_to_pdf(buffer)
             filename = f"{template.name}_preview.pdf"
-            pdf_time = datetime.utcnow() - docx_time
+            pdf_time = datetime.utcnow()
             logger.debug(
                 f"Time of pdf generation for template {template_id} is {pdf_time-docx_time}"
             )
