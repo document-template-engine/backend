@@ -40,7 +40,6 @@ from .serializers import (
     TemplateWriteSerializer,
 )
 
-# from api.v1.utils import Util
 from api.v1 import utils as v1utils
 from core.constants import Messages
 from core.template_render import DocumentTemplate
@@ -150,7 +149,8 @@ class TemplateFieldViewSet(viewsets.ModelViewSet):
 
     serializer_class = TemplateFieldSerializer
     http_method_names = ("get",)
-    permission_classes = (AllowAny,)
+    permission_classes = (IsAdminOrReadOnly,)
+        # permission_classes = (AllowAny,) # Заглушка
     pagination_class = None
 
     def get_queryset(self):
@@ -165,8 +165,8 @@ class DocumentViewSet(viewsets.ModelViewSet):
     queryset = Document.objects.all()
     serializer_class = DocumentReadSerializerMinified
     http_method_names = ("get", "post", "patch", "delete")
-    # permission_classes = (IsAuthenticated,)
-    permission_classes = (AllowAny,)
+    permission_classes = (IsAuthenticated,)
+    # permission_classes = (AllowAny,) # Заглушка
     filter_backends = (
         filters.SearchFilter,
         filters.OrderingFilter,
@@ -200,8 +200,8 @@ class DocumentViewSet(viewsets.ModelViewSet):
     @action(
         detail=False,
         permission_classes=[
-            # IsAuthenticated,
-            AllowAny,
+            IsAuthenticated,
+            # AllowAny,  # Заглушка
         ],
         url_path=r"draft",
     )
@@ -232,7 +232,9 @@ class DocumentViewSet(viewsets.ModelViewSet):
 
     @action(
         detail=True,
-        permission_classes=[IsAuthenticated],
+        permission_classes=[
+            IsAuthenticated
+            ],
         url_path=r"download_document",
     )
     def download_document(self, request, pk=None):
@@ -250,7 +252,9 @@ class DocumentViewSet(viewsets.ModelViewSet):
 
     @action(
         detail=True,
-        permission_classes=[IsAuthenticated],
+        permission_classes=[
+            IsAuthenticated
+            ],
         url_path="download_pdf",
     )
     def download_pdf(self, request, pk=None):
@@ -274,7 +278,7 @@ class DocumentFieldViewSet(viewsets.ModelViewSet):
     serializer_class = DocumentFieldSerializer
     http_method_names = ("get",)
     permission_classes = (IsAuthenticated,)
-    # permission_classes = (AllowAny,)
+    # permission_classes = (AllowAny,) # Заглушка
     pagination_class = None
 
     def get_queryset(self):
@@ -290,6 +294,7 @@ class DocumentFieldViewSet(viewsets.ModelViewSet):
 
 class FavTemplateAPIview(APIView):
     permission_classes = (IsAuthenticated,)
+    # permission_classes = (AllowAny,) # Заглушка
 
     def post(self, request, **kwargs):
         data = {
@@ -323,6 +328,7 @@ class FavTemplateAPIview(APIView):
 
 class FavDocumentAPIview(APIView):
     permission_classes = (IsAuthenticated,)
+    # permission_classes = (AllowAny,) # Заглушка
 
     def post(self, request, **kwargs):
         data = {
@@ -396,7 +402,8 @@ class AnonymousDownloadPreviewAPIView(views.APIView):
 
 
 class CheckTemplateConsistencyAPIView(views.APIView):
-    permission_classes = (AllowAny,)  # isAdmin
+    permission_classes = (IsAdminUser,)
+    # permission_classes = (AllowAny,) # Заглушка
 
     def get(self, request, template_id):
         template = get_object_or_404(Template, id=template_id)
@@ -416,6 +423,7 @@ class UploadTemplateFileAPIView(generics.UpdateAPIView):
     lookup_field = "id"
     lookup_url_kwarg = "template_id"
     permission_classes = (IsAdminUser,)
+    # permission_classes = (AllowAny,) # Заглушка
     http_method_names = ["patch", "put"]
 
 
