@@ -5,6 +5,8 @@ import logging
 import os
 from pathlib import Path
 
+# import aspose.words as aw
+
 from django.contrib.auth import get_user_model
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
@@ -22,6 +24,7 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from .permissions import IsAdminOrReadOnly, IsOwner, IsOwnerOrAdminOrReadOnly
 from .serializers import (
@@ -38,7 +41,9 @@ from .serializers import (
     TemplateSerializer,
     TemplateSerializerMinified,
     TemplateWriteSerializer,
+    CustomUserSerializer,
 )
+
 
 from api.v1 import utils as v1utils
 from core.constants import Messages
@@ -426,31 +431,54 @@ class UploadTemplateFileAPIView(generics.UpdateAPIView):
     # permission_classes = (AllowAny,) # Заглушка
     http_method_names = ["patch", "put"]
 
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes
+from django.urls import reverse_lazy
+from django.views.generic import CreateView, View, TemplateView
 
-# class RegisterView(generics.GenericAPIView):
-#     serializer_class = CustomUserSerializer
+class RegisterView(generics.GenericAPIView):
+    serializer_class = CustomUserSerializer
 
-#     def post(self, request):
-#         user = request.data
-#         serializer = self.serializer_class(data=user)
-#         serializer.is_valid(raise_exception=True)
-#         serializer.save()
-#         user_data = serializer.data
-#         user = User.objects.get(email=user_data["email"])
-#         token = RefreshToken.for_user(user).access_token
+    def post(self, request):
+        user = request.data
+        serializer = self.serializer_class(data=user)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        user_data = serializer.data
+        user = User.objects.get(email=user_data["email"])
+        token = RefreshToken.for_user(user).access_token
+        
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        activation_url = reverse_lazy('confirm_email', kwargs={'uidb64': uid, 'token': token})
+        print(activation_url)
+        absurl = f'http://127.0.0.1:9000/{activation_url}'
+        email_body = (
+            "Hi "
+            + user.username
+            + " Use the link below to verify your email \n"
+            + absurl
+        )
+        print(email_body)
+        data = {
+            "email_body": email_body,
+            "to_email": user.email,
+            "email_subject": "Verify your email",
+        }
 
-#         absurl = "https://documents-template.site/" + "?token=" + str(token)
-#         email_body = (
-#             "Hi "
-#             + user.username
-#             + " Use the link below to verify your email \n"
-#             + absurl
-#         )
-#         data = {
-#             "email_body": email_body,
-#             "to_email": user.email,
-#             "email_subject": "Verify your email",
-#         }
+        Util.send_email(data)
+        return Response(user_data, status=status.HTTP_201_CREATED)
 
-#         Util.send_email(data)
-#         return Response(user_data, status=status.HTTP_201_CREATED)
+from django.contrib.auth.tokens import default_token_generator
+from django.contrib.auth import login
+class UserConfirmEmailView(View):
+    def get(self, request, uidb64, token):
+        try:
+            uid = urlsafe_base64_decode(uidb64)
+            user = User.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            user = None
+
+        if user is not None and default_token_generator.check_token(user, token):
+            user.is_active = True
+            user.save()
+            login(request, user)

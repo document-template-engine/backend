@@ -1,6 +1,7 @@
 """Сериализаторы для API."""
 import base64
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from django.core.files.base import ContentFile
 from django.db import transaction
 from djoser.serializers import UserSerializer
@@ -443,7 +444,9 @@ class DocumentWriteSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         """Обновление документа и полей документа"""
         document_fields = validated_data.pop("document_fields", None)
-        Document.objects.filter(id=instance.id).update(**validated_data)
+        Document.objects.filter(id=instance.id).update(
+            **validated_data, updated=timezone.now()
+        )
         document = Document.objects.get(id=instance.id)
         if document_fields is not None:
             custom_fieldtypes_validation(document_fields)
