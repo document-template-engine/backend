@@ -2,6 +2,7 @@
 
 import datetime
 import io
+import logging
 import pathlib
 import subprocess
 import tempfile
@@ -10,6 +11,8 @@ from typing import Any, Dict, List, Set, Union
 from django.core.mail import send_mail
 
 from documents.models import Document, DocumentTemplate, TemplateField
+
+logger = logging.getLogger(__name__)
 
 
 class Util:
@@ -91,8 +94,9 @@ def date_iso_to_ddmmyyyy(value: str):
     try:
         date = datetime.date.fromisoformat(value)
         return date.strftime("%d.%m.%Y")
-    except Exception as e:
-        print(e)  # TODO logging
+    except Exception:
+        # print(e)  # TODO logging
+        logger.debug("Invalid date:", exc_info=True)
         return value
 
 
@@ -104,4 +108,3 @@ def custom_fieldtypes_validation(
         field = data["field"]
         if field.type.type == "date":
             data["value"] = date_iso_to_ddmmyyyy(data["value"])
-            print("DATE CONVERTED TO ", data["value"])
