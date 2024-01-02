@@ -1,9 +1,8 @@
 """Настройки админки для приложения "Документы"."""
+from django import forms
 from django.contrib import admin
 
 from documents import models
-
-admin.site.register(models.FieldToDocument)
 
 
 @admin.register(models.Category)
@@ -38,6 +37,12 @@ class TemplateFieldInlineAdmin(admin.TabularInline):
             )
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        formfield = super().formfield_for_dbfield(db_field, request, **kwargs)
+        if db_field.name == "default":
+            formfield.strip = False
+        return formfield
+
 
 @admin.register(models.Template)
 class TemplateAdmin(admin.ModelAdmin):
@@ -46,13 +51,13 @@ class TemplateAdmin(admin.ModelAdmin):
         "owner",
         "category",
         "template",
-        "modified",
+        "updated",
         "deleted",
         "description",
         "image",
     )
     list_filter = ("owner", "category", "deleted")
-    readonly_fields = ("id",)
+    readonly_fields = ("id", "updated")
     inlines = (TemplateFieldInlineAdmin,)
 
     def get_form(self, request, instance=None, **kwargs):
@@ -74,6 +79,17 @@ class TemplateFieldTypeAdmin(admin.ModelAdmin):
     search_fields = ("name",)
 
 
+class TemplateFieldForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # allow space for default value
+        self.fields["default"].strip = False
+
+    class Meta:
+        model = models.TemplateField
+        fields = "__all__"
+
+
 @admin.register(models.TemplateField)
 class TemplateFieldAdmin(admin.ModelAdmin):
     list_display = (
@@ -90,6 +106,8 @@ class TemplateFieldAdmin(admin.ModelAdmin):
     readonly_fields = ("id",)
     search_fields = ("name",)
 
+    form = TemplateFieldForm
+
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "group":
             field_id = request.resolver_match.kwargs.get("object_id")
@@ -101,6 +119,18 @@ class TemplateFieldAdmin(admin.ModelAdmin):
                     ] = models.TemplateFieldGroup.objects.filter(
                         template=field.template
                     )
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+
+class DocumentFieldInlineAdmin(admin.TabularInline):
+    model = models.DocumentField
+    extra = 1
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "field" and request._document_instance_:
+            template = request._document_instance_.template
+            if template:
+                kwargs["queryset"] = template.fields.all()
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
@@ -117,12 +147,28 @@ class DocumentAdmin(admin.ModelAdmin):
     )
     list_filter = ("template", "owner", "completed")
     readonly_fields = ("id", "created", "updated")
+    inlines = (DocumentFieldInlineAdmin,)
+
+    def get_form(self, request, instance=None, **kwargs):
+        request._document_instance_ = instance
+        return super().get_form(request, instance, **kwargs)
 
 
 @admin.register(models.DocumentField)
 class DocumentFieldAdmin(admin.ModelAdmin):
-    list_display = ("id", "field_id", "value", "description")
+    list_display = ("id", "document_id", "field_id", "value")
     readonly_fields = ("id",)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "field":
+            docfield_id = request.resolver_match.kwargs.get("object_id")
+            if docfield_id:
+                docfield = models.DocumentField.objects.get(id=docfield_id)
+                if docfield.document.template:
+                    kwargs[
+                        "queryset"
+                    ] = docfield.document.template.fields.all()
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 admin.site.site_header = "Административная панель Шаблонизатор"

@@ -107,6 +107,13 @@ class CustomFilters:
             return value
         return self.inflect_words(words, "ablt")
 
+    def loct(self, words: str) -> str:
+        """Преобразует слова предложный падеж"""
+        skip, value = self._skip_filter(words)
+        if skip:
+            return value
+        return self.inflect_words(words, "loct")
+
     def noun_plural(self, word: str, n: int) -> str:
         """Склонение заданного слова (существительное) в зависимости от числа n."""
         skip, value = self._skip_filter(word)
@@ -181,6 +188,7 @@ class CustomFilters:
             "genitive": self.genitive,
             "dative": self.dative,
             "ablt": self.ablt,
+            "loct": self.loct,
             "noun_plural": self.noun_plural,
             "adj_plural": self.adj_plural,
             "currency_to_words": self.currency_to_words,
@@ -295,7 +303,7 @@ class DocumentTemplate:
                 start_run = None
 
     def prepare_template(self):
-        """Подгтотовка шаблона к использованию (объединение прогонов)"""
+        """Подготовка шаблона к использованию (объединение прогонов)"""
         self._template.init_docx()
         docx = self._template.docx
         tag_style = docx.styles[self.TAG_STYLE_NAME]

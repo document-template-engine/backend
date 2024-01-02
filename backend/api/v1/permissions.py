@@ -29,8 +29,29 @@ class IsOwnerOrAdminOrReadOnly(permissions.BasePermission):
         return obj.owner == request.user or request.user.is_superuser
 
 
+class IsAdminOrReadOnly(permissions.BasePermission):
+    """Доступ: Админ или только для чтения"""
+
+    def has_permission(self, request, view):
+        """Видеть список могут все, добавлять только администратор."""
+
+        return request.method in permissions.SAFE_METHODS or (
+            request.user.is_authenticated and request.user.is_superuser
+        )
+
+    def has_object_permission(self, request, view, obj):
+        return (
+            request.method in permissions.SAFE_METHODS
+            or request.user.is_superuser
+        )
+
+
 class IsOwner(permissions.BasePermission):
     """Доступ: только владелец."""
+
+    def has_permission(self, request, view):
+        """Видеть список может только владелец."""
+        return request.user.is_authenticated
 
     def has_object_permission(self, request, view, obj):
         """Под объектом подразумевается Document."""
