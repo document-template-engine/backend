@@ -7,6 +7,7 @@ from django.db import models
 
 from core.constants import Messages
 from core.template_render import DocumentTemplate
+from base_objects.models import BaseObject
 
 User = get_user_model()
 
@@ -138,6 +139,15 @@ class TemplateFieldGroup(models.Model):
     name = models.CharField(
         max_length=255,
         verbose_name="Наименование группы полей",
+    )
+
+    type_object = models.ForeignKey(
+        BaseObject,
+        on_delete=models.SET_NULL,
+        verbose_name="Обьект",
+        null=True,
+        blank=True,
+        default=None
     )
 
     class Meta:

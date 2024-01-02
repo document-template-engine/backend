@@ -8,8 +8,8 @@ from api.v1.views import (
     FavTemplateAPIview,
     FavDocumentAPIview,
     UploadTemplateFileAPIView,
-    # RegisterView,
-)
+    )
+
 from django.urls import include, path, re_path
 from rest_framework.routers import DefaultRouter
 
@@ -64,7 +64,6 @@ urlpatterns = [
         UploadTemplateFileAPIView.as_view(),
         name="upload_template",
     ),
-    # path("users/", RegisterView.as_view(), name="register"),
     path("", include(router_v1.urls)),
     path("", include("djoser.urls")),
     path("auth/", include("djoser.urls.authtoken")),
