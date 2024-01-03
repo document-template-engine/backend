@@ -1,14 +1,31 @@
-from api.v1.views import (
+# from api.v1.views import (
+#     AnonymousDownloadPreviewAPIView,
+#     CheckTemplateConsistencyAPIView,
+#     TemplateFieldViewSet,
+#     TemplateViewSet,
+#     FavTemplateAPIview,
+#     FavDocumentAPIview,
+#     UploadTemplateFileAPIView,
+#     )
+
+from api.v1.documents.views import (
+    DocumentFieldViewSet,
+    DocumentViewSet,)
+
+from api.v1.templates import (
+    UploadTemplateFileAPIView,
     AnonymousDownloadPreviewAPIView,
     CheckTemplateConsistencyAPIView,
-    DocumentFieldViewSet,
-    DocumentViewSet,
     TemplateFieldViewSet,
-    TemplateViewSet,
+    TemplateViewSet,)
+
+from api.v1.users import ()
+from api.v1.favorites import (
     FavTemplateAPIview,
-    FavDocumentAPIview,
-    UploadTemplateFileAPIView,
-    )
+    FavDocumentAPIview,)
+from api.v1.objects import (BaseObjectViewSet,
+                            BaseObjectFieldViewSet,
+                            ObjectViewSet)
 
 from django.urls import include, path, re_path
 from rest_framework.routers import DefaultRouter
