@@ -6,27 +6,17 @@ from django.core.files.base import ContentFile
 from django.db import transaction
 from rest_framework import serializers
 
-from api.v1.utils import custom_fieldtypes_validation
-from api.v1.templates.serializers import (TemplateGroupSerializer,
+from api.v2.utils import custom_fieldtypes_validation
+from api.v2.templates.serializers import (TemplateGroupSerializer,
                                           TemplateSerializerMinified,
                                           TemplateFieldSerializerMinified)
 from core.constants import Messages
 from documents.models import (
     Document,
-    DocumentField,)
+    DocumentField,
+    FavDocument)
 
 User = get_user_model()
-
-
-class Base64ImageField(serializers.ImageField):
-    def to_internal_value(self, data):
-        if isinstance(data, str) and data.startswith("data:image"):
-            format, imgstr = data.split(";base64,")
-            ext = format.split("/")[-1]
-
-            data = ContentFile(base64.b64decode(imgstr), name="temp." + ext)
-
-        return super().to_internal_value(data)
 
 
 class DocumentFieldSerializer(serializers.ModelSerializer):

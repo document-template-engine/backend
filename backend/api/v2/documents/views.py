@@ -10,12 +10,14 @@ from rest_framework import (
     filters,
     status,
     viewsets,
+    views,
 )
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 
+from core.template_render import DocumentTemplate
 from .serializers import (
     DocumentFieldSerializer,
     DocumentReadSerializerExtended,
@@ -23,9 +25,8 @@ from .serializers import (
     DocumentWriteSerializer,
 
 )
-
-from api.v1 import utils as v1utils
-from documents.models import Document
+from api.v2 import utils as v1utils
+from documents.models import Document, Template
 
 logger = logging.getLogger(__name__)
 
@@ -173,3 +174,45 @@ class DocumentFieldViewSet(viewsets.ModelViewSet):
         ):
             raise PermissionDenied()
         return document.document_fields.all()
+
+
+class AnonymousDownloadPreviewAPIView(views.APIView):
+    permission_classes = (AllowAny,)
+
+    def post(self, request, template_id):
+        logger.debug(f"Start preview generation for template {template_id}")
+        start_time = datetime.utcnow()
+        template = get_object_or_404(Template, id=template_id)
+        document_fields = request.data.get("document_fields")
+        serializer = DocumentFieldWriteSerializer(
+            data=document_fields,
+            context={"template_fields": set(template.fields.all())},
+            many=True,
+        )
+        serializer.is_valid(raise_exception=True)
+        v1utils.custom_fieldtypes_validation(serializer.validated_data)
+        context = {}
+        for data in serializer.validated_data:
+            if data["value"]:  # write only fields with non empty value
+                context[data["field"].tag] = data["value"]
+        context_default = {
+            field.tag: field.default or field.name
+            for field in template.fields.all()
+        }
+        doc = DocumentTemplate(template.template)
+        buffer = doc.get_partial(context, context_default)
+        filename = f"{template.name}_preview.docx"
+        docx_time = datetime.utcnow()
+        logger.debug(
+            f"Time of docx generation for template {template_id} is {docx_time-start_time}"
+        )
+        if request.query_params.get("pdf"):
+            buffer = v1utils.convert_file_to_pdf(buffer)
+            filename = f"{template.name}_preview.pdf"
+            pdf_time = datetime.utcnow()
+            logger.debug(
+                f"Time of pdf generation for template {template_id} is {pdf_time-docx_time}"
+            )
+        response = send_file(buffer, filename)
+        return response
+

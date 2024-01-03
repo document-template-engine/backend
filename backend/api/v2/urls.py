@@ -1,15 +1,19 @@
-from api.v1.views import (
+from api.v2.documents.views import (
     AnonymousDownloadPreviewAPIView,
-    CheckTemplateConsistencyAPIView,
     DocumentFieldViewSet,
-    DocumentViewSet,
-    TemplateFieldViewSet,
-    TemplateViewSet,
-    FavTemplateAPIview,
-    FavDocumentAPIview,
+    DocumentViewSet,)
+from api.v2.templates.views import (
     UploadTemplateFileAPIView,
-    # RegisterView,
-)
+    CheckTemplateConsistencyAPIView,
+    TemplateFieldViewSet,
+    TemplateViewSet,)
+from api.v2.favorites.views import (
+    FavTemplateAPIview,
+    FavDocumentAPIview,)
+# from api.v2.objects.views import (BaseObjectViewSet,
+#                             BaseObjectFieldViewSet,
+#                             ObjectViewSet)
+
 from django.urls import include, path, re_path
 from rest_framework.routers import DefaultRouter
 
@@ -42,6 +46,27 @@ router_v1.register(
     viewset=DocumentViewSet,
 )
 
+# router_v1.register(
+#     prefix="base_objects",
+#     basename="base_objects",
+#     viewset=BaseObjectViewSet,
+# )
+# router_v1.register(
+#     prefix="base_object_fields",
+#     basename="base_object_fields",
+#     viewset=BaseObjectFieldViewSet,
+# )
+# router_v1.register(
+#     prefix="objects",
+#     basename="objects",
+#     viewset=ObjectViewSet,
+# )
+# router_v1.register(
+#     prefix="object_fields",
+#     basename="object_fields",
+#     viewset=ObjectFieldViewSet,
+# )
+
 urlpatterns = [
     path(
         "templates/<int:template_id>/favorite/", FavTemplateAPIview.as_view()
@@ -64,7 +89,6 @@ urlpatterns = [
         UploadTemplateFileAPIView.as_view(),
         name="upload_template",
     ),
-    # path("users/", RegisterView.as_view(), name="register"),
     path("", include(router_v1.urls)),
     path("", include("djoser.urls")),
     path("auth/", include("djoser.urls.authtoken")),

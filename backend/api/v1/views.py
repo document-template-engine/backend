@@ -55,11 +55,6 @@ from documents.models import (
     FavTemplate,
     Template,
 )
-from base_objects.models import (BaseObject,
-                          BaseObjectField,
-                          Object,
-                          ObjectField
-                          )
 
 logger = logging.getLogger(__name__)
 
@@ -487,10 +482,3 @@ class UserConfirmEmailView(View):
             user.is_active = True
             user.save()
             login(request, user)
-
-
-class BaseObjectFieldViewSet(viewsets.ModelViewSet):
-    queryset = BaseObject.objects.all()
-    http_method_names = ("get",)
-    permission_classes = (IsAdminOrReadOnly,)  # AllowAny
-    pagination_class = None
