@@ -101,7 +101,7 @@ class TemplateFieldAdmin(admin.ModelAdmin):
         "group",
         "type",
         "length",
-        "base_object_field",
+        # "base_object_field",
     )
     list_filter = ("template",)
     readonly_fields = ("id",)

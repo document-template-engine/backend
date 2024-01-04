@@ -23,7 +23,7 @@ from .serializers import (
     DocumentReadSerializerExtended,
     DocumentReadSerializerMinified,
     DocumentWriteSerializer,
-
+    DocumentFieldWriteSerializer,
 )
 from api.v2 import utils as v1utils
 from documents.models import Document, Template

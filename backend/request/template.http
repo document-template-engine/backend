@@ -1,11 +1,11 @@
-@TOKEN = Token 640063c217c9693de37f04d65249f35a19705efb
+@TOKEN = Token 66ba19730c8aaad7378dc20fae75656b06b00e02
 
 # @URL = https://documents-template.site/
-@URL = http://localhost:8000
+@URL = http://localhost:8000/api/v2
 
 
 ### Все шаблоны
-GET {{URL}}/api/templates/ 
+GET {{URL}}/templates/ 
 Content-Type: application/json
 Authorization: {{TOKEN}}
 
@@ -13,7 +13,7 @@ Authorization: {{TOKEN}}
 }
 
 ### Просмотр одного шаблона
-GET {{URL}}/api/templates/1/ 
+GET {{URL}}/templates/22/ 
 Content-Type: application/json
 Authorization: {{TOKEN}}
 
@@ -22,7 +22,7 @@ Authorization: {{TOKEN}}
 
 
 ### Просмотр всех полей шаблона
-GET {{URL}}/api/templates/1/fields
+GET {{URL}}/templates/42/fields
 Content-Type: application/json
 Authorization: {{TOKEN}}
 
@@ -30,7 +30,7 @@ Authorization: {{TOKEN}}
 }
 
 ### Добавить шаблон в избранное
-POST {{URL}}/api/templates/1/favorite/
+POST {{URL}}/templates/22/favorite/
 Content-Type: application/json
 Authorization: {{TOKEN}}
 
@@ -38,15 +38,7 @@ Authorization: {{TOKEN}}
 }
 
 ### Удалить шаблон из избранного
-DELETE {{URL}}/api/templates/1/favorite/
-Content-Type: application/json
-Authorization: {{TOKEN}}
-
-{
-}
-
-### Удалить шаблон из избранного
-DELETE {{URL}}/api/templates/1/favorite/
+DELETE {{URL}}/templates/1/favorite/
 Content-Type: application/json
 Authorization: {{TOKEN}}
 
@@ -55,7 +47,7 @@ Authorization: {{TOKEN}}
 
 
 ### Получить первью документа от анонимного пользователя
-POST {{URL}}/api/templates/1/download_preview/
+POST {{URL}}/templates/22/download_preview/
 Content-Type: application/json
 # Authorization: {{TOKEN}}
 
@@ -101,7 +93,7 @@ Content-Type: application/json
 }
 
 ### Добавить новый шаблон и описание его полей в базу (ТОЛЬКО ДЛЯ АДМИНА)
-POST {{URL}}/api/templates/
+POST {{URL}}/templates/
 Content-Type: application/json
 Authorization: {{TOKEN}}
 
