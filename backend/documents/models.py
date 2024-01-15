@@ -7,6 +7,7 @@ from django.db import models
 
 from core.constants import Messages
 from core.template_render import DocumentTemplate
+from base_objects.models import BaseObject, BaseObjectField
 
 User = get_user_model()
 
@@ -140,6 +141,15 @@ class TemplateFieldGroup(models.Model):
         verbose_name="Наименование группы полей",
     )
 
+    type_object = models.ForeignKey(
+        BaseObject,
+        on_delete=models.SET_NULL,
+        verbose_name="Обьект",
+        null=True,
+        blank=True,
+        default=None
+    )
+
     class Meta:
         verbose_name = "Группа полей"
         verbose_name_plural = "Группы полей"
@@ -178,6 +188,13 @@ class TemplateField(models.Model):
         Template,
         on_delete=models.CASCADE,
         verbose_name="Шаблон",
+    )
+    base_object_field = models.ForeignKey(
+        BaseObjectField,
+        on_delete=models.SET_NULL,
+        verbose_name="Поле базового обьекта",
+        null=True,
+        blank=True,
     )
     tag = models.CharField(max_length=255, verbose_name="Тэг поля")
     name = models.CharField(max_length=255, verbose_name="Наименование поля")
@@ -288,7 +305,6 @@ class DocumentField(models.Model):
         related_name="document_fields",
     )
     value = models.CharField(max_length=255, verbose_name="Содержимое поля")
-    # description = models.CharField(verbose_name="Описание поля", blank=True)
     document = models.ForeignKey(
         Document,
         on_delete=models.CASCADE,
@@ -304,27 +320,6 @@ class DocumentField(models.Model):
     def __str__(self):
         """Отображение - шаблон поле."""
         return f"{self.field.template} {self.field}"
-
-    # class FieldToDocument(models.Model):
-    #     """Связь полей и документов."""
-
-    #     document = models.ForeignKey(
-    #         Document,
-    #         on_delete=models.CASCADE,
-    #         related_name="document_of_field",
-    #     )
-    #     fields = models.ForeignKey(
-    #         DocumentField,
-    #         on_delete=models.CASCADE,
-    #         related_name="fields_of_document",
-    #     )
-
-    #     class Meta:
-    #         verbose_name = "Связь между полем и документом"
-    #         verbose_name_plural = "Связи между полями и документами"
-
-    # def __str__(self):
-    #     return f"{self.document} {self.fields}"
 
 
 class FavTemplate(models.Model):

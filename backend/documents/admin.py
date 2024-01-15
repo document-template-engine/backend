@@ -67,7 +67,7 @@ class TemplateAdmin(admin.ModelAdmin):
 
 @admin.register(models.TemplateFieldGroup)
 class TemplateFieldGroupAdmin(admin.ModelAdmin):
-    list_display = ("id", "name", "template")
+    list_display = ("id", "name", "template", "type_object")
     readonly_fields = ("id",)
     search_fields = ("name", "template")
 
@@ -101,6 +101,7 @@ class TemplateFieldAdmin(admin.ModelAdmin):
         "group",
         "type",
         "length",
+        "base_object_field",
     )
     list_filter = ("template",)
     readonly_fields = ("id",)
