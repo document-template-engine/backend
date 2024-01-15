@@ -7,7 +7,10 @@ from django.db import models
 
 from core.constants import Messages
 from core.template_render import DocumentTemplate
-from base_objects.models import BaseObject, BaseObjectField
+from base_objects.models import (
+    BaseObject,
+    BaseObjectField,
+)
 
 User = get_user_model()
 

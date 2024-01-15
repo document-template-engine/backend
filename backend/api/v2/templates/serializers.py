@@ -103,7 +103,7 @@ class TemplateGroupSerializerMinified(serializers.ModelSerializer):
 
     class Meta:
         model = TemplateFieldGroup
-        fields = ("id", "name")
+        fields = ("id", "name", )
 
 
 class TemplateGroupSerializer(serializers.ModelSerializer):

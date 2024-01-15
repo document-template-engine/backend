@@ -57,18 +57,16 @@ class Object(models.Model):
 
     # owner = models.ForeignKey(
     #     User,
-    #     on_delete=models.CASCADE,
+    #     on_delete=models.SET_NULL,
     #     verbose_name="Автор документа",
     #     null=True,
     #     blank=True,
     # )
-    base_object = models.ForeignKey(
-        BaseObject,
-        on_delete=models.PROTECT,
-        verbose_name="Юр или физ лицо",
-        null=True,
-        blank=True,
-    )
+    # base_object = models.ForeignKey(
+    #     BaseObject,
+    #     on_delete=models.CASCADE,
+    #     verbose_name="поля базового Обьект",
+    # )
     name = models.CharField(
         max_length=255, verbose_name="Наименование обьекта"
     )

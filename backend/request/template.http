@@ -1,4 +1,4 @@
-@TOKEN = Token c911144116cd1689f8fd01e00102bcd1ce4cc175
+@TOKEN = Token 66ba19730c8aaad7378dc20fae75656b06b00e02
 
 # @URL = https://documents-template.site/
 @URL = http://localhost:8000/api/v2
@@ -13,7 +13,7 @@ Authorization: {{TOKEN}}
 }
 
 ### Просмотр одного шаблона
-GET {{URL}}/templates/42/ 
+GET {{URL}}/templates/22/ 
 Content-Type: application/json
 Authorization: {{TOKEN}}
 
@@ -30,7 +30,7 @@ Authorization: {{TOKEN}}
 }
 
 ### Добавить шаблон в избранное
-POST {{URL}}/templates/42/favorite/
+POST {{URL}}/templates/22/favorite/
 Content-Type: application/json
 Authorization: {{TOKEN}}
 
@@ -47,7 +47,7 @@ Authorization: {{TOKEN}}
 
 
 ### Получить первью документа от анонимного пользователя
-POST {{URL}}/templates/42/download_preview/
+POST {{URL}}/templates/22/download_preview/
 Content-Type: application/json
 # Authorization: {{TOKEN}}
 
