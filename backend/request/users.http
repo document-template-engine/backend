@@ -1,6 +1,6 @@
 @TOKEN = Token c911144116cd1689f8fd01e00102bcd1ce4cc175
-# @URL = https://documents-template.site
-@URL = http://127.0.0.1:8000/api/v2
+@URL = https://doki.pro/api/v2
+# @URL = http://127.0.0.1:8000/api/v2
 
 ###
 POST {{URL}}/users/

@@ -150,7 +150,7 @@ class TemplateFieldGroup(models.Model):
         verbose_name="Обьект",
         null=True,
         blank=True,
-        default=None
+        # default=None
     )
 
     class Meta:
@@ -198,6 +198,7 @@ class TemplateField(models.Model):
         verbose_name="Поле базового обьекта",
         null=True,
         blank=True,
+        default=1
     )
     tag = models.CharField(max_length=255, verbose_name="Тэг поля")
     name = models.CharField(max_length=255, verbose_name="Наименование поля")
