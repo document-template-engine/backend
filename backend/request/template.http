@@ -1,13 +1,13 @@
 @TOKEN = Token 66ba19730c8aaad7378dc20fae75656b06b00e02
 
-# @URL = https://documents-template.site/
-@URL = http://localhost:8000/api/v2
+@URL = https://doky.pro/api/v2
+# @URL = http://localhost:8000/api/v2
 
 
 ### Все шаблоны
 GET {{URL}}/templates/ 
 Content-Type: application/json
-Authorization: {{TOKEN}}
+# Authorization: {{TOKEN}}
 
 {
 }

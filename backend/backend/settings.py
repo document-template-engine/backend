@@ -2,7 +2,7 @@
 import os
 from pathlib import Path
 
-# import sentry_sdk
+import sentry_sdk
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -203,13 +203,13 @@ LOGGING = {
     },
 }
 
-# sentry_sdk.init(
-#     dsn="https://be8f804283b7a2e423209e00692792f0@o4506344044298240.ingest.sentry.io/4506344234156032",
-#     # Set traces_sample_rate to 1.0 to capture 100%
-#     # of transactions for performance monitoring.
-#     traces_sample_rate=1.0,
-#     # Set profiles_sample_rate to 1.0 to profile 100%
-#     # of sampled transactions.
-#     # We recommend adjusting this value in production.
-#     profiles_sample_rate=1.0,
-# )
+sentry_sdk.init(
+    dsn="https://be8f804283b7a2e423209e00692792f0@o4506344044298240.ingest.sentry.io/4506344234156032",
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for performance monitoring.
+    traces_sample_rate=1.0,
+    # Set profiles_sample_rate to 1.0 to profile 100%
+    # of sampled transactions.
+    # We recommend adjusting this value in production.
+    profiles_sample_rate=1.0,
+)

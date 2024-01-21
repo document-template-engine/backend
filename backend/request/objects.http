@@ -7,7 +7,7 @@
 ### Все базовые обьекты
 GET {{URL}}/base_objects/ 
 Content-Type: application/json
-Authorization: {{TOKEN}}
+# Authorization: {{TOKEN}}
 
 {
 }
@@ -15,7 +15,7 @@ Authorization: {{TOKEN}}
 ### Все поля базового обьекта
 GET {{URL}}/base_object_fields/ 
 Content-Type: application/json
-Authorization: {{TOKEN}}
+# Authorization: {{TOKEN}}
 
 {
 }
@@ -23,7 +23,7 @@ Authorization: {{TOKEN}}
 ### Все поля базового обьекта
 GET {{URL}}/objects/ 
 Content-Type: application/json
-Authorization: {{TOKEN}}
+# Authorization: {{TOKEN}}
 
 {
 }
@@ -31,7 +31,7 @@ Authorization: {{TOKEN}}
 ### Все поля базового обьекта
 GET {{URL}}/object_fields/ 
 Content-Type: application/json
-Authorization: {{TOKEN}}
+# Authorization: {{TOKEN}}
 
 {
 }

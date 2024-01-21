@@ -37,6 +37,7 @@ class BaseObjectField(models.Model):
         BaseObject,
         on_delete=models.CASCADE,
         verbose_name="поля базового Обьект",
+        default=1,
     )
     name = models.CharField(
         max_length=255,
@@ -55,18 +56,20 @@ class BaseObjectField(models.Model):
 class Object(models.Model):
     """Обьект."""
 
-    # owner = models.ForeignKey(
-    #     User,
-    #     on_delete=models.SET_NULL,
-    #     verbose_name="Автор документа",
-    #     null=True,
-    #     blank=True,
-    # )
-    # base_object = models.ForeignKey(
-    #     BaseObject,
-    #     on_delete=models.CASCADE,
-    #     verbose_name="поля базового Обьект",
-    # )
+    owner = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        verbose_name="Автор документа",
+        null=True,
+        blank=True,
+    )
+    base_object = models.ForeignKey(
+        BaseObject,
+        on_delete=models.CASCADE,
+        verbose_name="Базовый Обьект",
+        null=True,
+        blank=True,
+    )
     name = models.CharField(
         max_length=255, verbose_name="Наименование обьекта"
     )
@@ -82,7 +85,7 @@ class Object(models.Model):
     class Meta:
         verbose_name = "Обьект"
         verbose_name_plural = "Обьекты"
-        default_related_name = "objects"
+        default_related_name = "customer_objects"
 
     def __str__(self):
         """Отображение - название."""
