@@ -24,7 +24,7 @@ class TestAPIRegistrationAndAuthenticationUser(APITestCase):
             "password": "qwertyqwerty123",
         }
         cls.response_registration = cls.client.post(
-            "/api/users/", cls.test_user_data
+            "/api/v2/users/", cls.test_user_data
         )
 
     @classmethod
@@ -45,10 +45,10 @@ class TestAPIRegistrationAndAuthenticationUser(APITestCase):
     def test_authentication(self):
         response_registration = self.response_registration
         response_token_login = self.client.post(
-            "/api/auth/token/login/", self.test_user_data
+            "/api/v2/auth/token/login/", self.test_user_data
         )
         response_auth = self.client.get(
-            "/api/users/me/",
+            "/api/v2/users/me/",
             HTTP_AUTHORIZATION=f'Token {response_token_login.data["auth_token"]}',
         )
         self.assertEqual(
