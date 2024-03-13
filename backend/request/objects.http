@@ -1,0 +1,37 @@
+@TOKEN = Token 66ba19730c8aaad7378dc20fae75656b06b00e02
+
+# @URL = https://documents-template.site/
+@URL = http://localhost:8000/api/v2
+
+
+### Все базовые обьекты
+GET {{URL}}/base_objects/ 
+Content-Type: application/json
+# Authorization: {{TOKEN}}
+
+{
+}
+
+### Все поля базового обьекта
+GET {{URL}}/base_object_fields/ 
+Content-Type: application/json
+# Authorization: {{TOKEN}}
+
+{
+}
+
+### Все поля базового обьекта
+GET {{URL}}/objects/ 
+Content-Type: application/json
+# Authorization: {{TOKEN}}
+
+{
+}
+
+### Все поля базового обьекта
+GET {{URL}}/object_fields/ 
+Content-Type: application/json
+# Authorization: {{TOKEN}}
+
+{
+}

@@ -11,16 +11,16 @@ urlpatterns = [
 ]
 
 schema_view = get_schema_view(
-   openapi.Info(
-      title="Draft API",
-      default_version='v1',
-      description="Документация для приложения draft docuemnts проекта Шаблонизатор",
-      # terms_of_service="URL страницы с пользовательским соглашением",
-      contact=openapi.Contact(email="nikox122@mail.ru"),
-      license=openapi.License(name="BSD License"),
-   ),
-   public=True,
-   permission_classes=(permissions.AllowAny,),
+    openapi.Info(
+        title="Draft API",
+        default_version='v1',
+        description="Документация для приложения draft docuemnts проекта Шаблонизатор",
+        # terms_of_service="URL страницы с пользовательским соглашением",
+        contact=openapi.Contact(email="nikox122@mail.ru"),
+        license=openapi.License(name="BSD License"),
+    ),
+    public=True,
+    permission_classes=(permissions.AllowAny,),
 )
 
 urlpatterns += [
