@@ -30,8 +30,12 @@ INSTALLED_APPS = [
     "api",
     "users",
     "documents",
-    "colorfield",  # wtf ?
     "core",
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.yandex',
+    'allauth.socialaccount.providers.vk',
 ]
 
 MIDDLEWARE = [
@@ -44,6 +48,9 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
+    # allauth
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
 ROOT_URLCONF = "backend.urls"
@@ -59,6 +66,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                'django.template.context_processors.request',
             ],
         },
     },
@@ -66,24 +74,24 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "backend.wsgi.application"
 
-if os.getenv("BD") == "sqlite":
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-        }
+# if os.getenv("BD") == "sqlite":
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
-else:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": os.getenv("POSTGRES_DB", "django"),
-            "USER": os.getenv("POSTGRES_USER", "django"),
-            "PASSWORD": os.getenv("POSTGRES_PASSWORD", ""),
-            "HOST": os.getenv("DB_HOST", ""),
-            "PORT": int(os.getenv("DB_PORT", "5432")),
-        }
-    }
+}
+# else:
+#     DATABASES = {
+#         "default": {
+#             "ENGINE": "django.db.backends.postgresql",
+#             "NAME": os.getenv("POSTGRES_DB", "django"),
+#             "USER": os.getenv("POSTGRES_USER", "django"),
+#             "PASSWORD": os.getenv("POSTGRES_PASSWORD", ""),
+#             "HOST": os.getenv("DB_HOST", ""),
+#             "PORT": int(os.getenv("DB_PORT", "5432")),
+#         }
+#     }
 
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -169,5 +177,13 @@ SWAGGER_SETTINGS = {
     "SECURITY_DEFINITIONS": {
         "Token": {"type": "apiKey", "name": "Authorization", "in": "header"}
     },
-    "BASE_PATH": "https://documents-template.site/api/",
+    "BASE_PATH": "https://doki.pro/api/v2/",
 }
+
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+ACCOUNT_LOGIN_REDIRECT_URL = "https://doky.pro/"
