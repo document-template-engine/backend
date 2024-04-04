@@ -1,12 +1,13 @@
 """Сериализаторы для API."""
 import base64
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from django.core.files.base import ContentFile
 from django.db import transaction
 from djoser.serializers import UserSerializer
 from rest_framework import serializers
 
-from .utils import get_non_unique_items
+from .utils import custom_fieldtypes_validation, get_non_unique_items
 from core.constants import Messages
 from documents.models import (
     Category,
@@ -67,18 +68,14 @@ class TemplateFieldWriteSerializer(serializers.ModelSerializer):
     type = serializers.SlugRelatedField(
         queryset=TemplateFieldType.objects.all(), slug_field="type"
     )
-    group = serializers.IntegerField(required=False)
+    group = serializers.IntegerField(required=False, default=None)
+    default = serializers.CharField(
+        trim_whitespace=False, max_length=255, required=False
+    )
 
     class Meta:
         model = TemplateField
-        fields = (
-            "tag",
-            "name",
-            "hint",
-            "group",
-            "type",
-            "length",
-        )
+        fields = ("tag", "name", "hint", "group", "type", "length", "default")
 
 
 class TemplateFieldSerializerMinified(serializers.ModelSerializer):
@@ -97,6 +94,7 @@ class TemplateFieldSerializerMinified(serializers.ModelSerializer):
             "type",
             "mask",
             "length",
+            "default",
         )
 
 
@@ -287,7 +285,7 @@ class TemplateWriteSerializer(serializers.ModelSerializer):
         # создание полей
         template_fields = []
         for data in data_fields:
-            group_id = data["group"]
+            group_id = data.get("group")
             if group_id:
                 data["group"] = group_models[group_id]
             template_fields.append(TemplateField(template=template, **data))
@@ -309,6 +307,24 @@ class DocumentFieldSerializer(serializers.ModelSerializer):
     class Meta:
         model = DocumentField
         exclude = ("document",)
+
+
+class DocumentFieldWriteSerializer(serializers.ModelSerializer):
+    """Сериализатор для полей документа или превью шаблона."""
+
+    # description = serializers.CharField(required=False, max_length=200)
+
+    class Meta:
+        model = DocumentField
+        fields = ("field", "value")
+
+    def validate_field(self, template_field):
+        template_fields = self.context.get("template_fields", set())
+        if template_field not in template_fields:
+            raise serializers.ValidationError(
+                Messages.WRONG_TEMPLATE_FIELD.format(template_field.id)
+            )
+        return template_field
 
 
 class DocumentReadSerializerMinified(serializers.ModelSerializer):
@@ -418,20 +434,25 @@ class DocumentWriteSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def create(self, validated_data):
         """Создание документа и полей документа"""
-        document_fields = validated_data.pop("document_fields")
+        document_fields = validated_data.pop("document_fields", None)
         document = Document.objects.create(**validated_data)
+        custom_fieldtypes_validation(document_fields)
         document.create_document_fields(document_fields)
         return document
 
     @transaction.atomic
     def update(self, instance, validated_data):
         """Обновление документа и полей документа"""
-        document_fields = validated_data.pop("document_fields")
-        Document.objects.filter(id=instance.id).update(**validated_data)
+        document_fields = validated_data.pop("document_fields", None)
+        Document.objects.filter(id=instance.id).update(
+            **validated_data, updated=timezone.now()
+        )
         document = Document.objects.get(id=instance.id)
-        document.document_fields.all().delete()
-        document.create_document_fields(document_fields)
-        return instance
+        if document_fields is not None:
+            custom_fieldtypes_validation(document_fields)
+            document.document_fields.all().delete()
+            document.create_document_fields(document_fields)
+        return document
 
     def to_representation(self, instance):
         return DocumentReadSerializerMinified(
@@ -455,24 +476,6 @@ class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = "__all__"
-
-
-class DocumentFieldForPreviewSerializer(serializers.ModelSerializer):
-    """Сериализатор для полей превью документа."""
-
-    # description = serializers.CharField(required=False, max_length=200)
-
-    class Meta:
-        model = DocumentField
-        fields = ("field", "value")
-
-    def validate_field(self, template_field):
-        template_fields = self.context.get("template_fields", set())
-        if template_field not in template_fields:
-            raise serializers.ValidationError(
-                Messages.WRONG_TEMPLATE_FIELD.format(template_field.id)
-            )
-        return template_field
 
 
 class TemplateFileUploadSerializer(serializers.ModelSerializer):
