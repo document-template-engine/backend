@@ -7,10 +7,10 @@ from django.db import models
 
 from core.constants import Messages
 from core.template_render import DocumentTemplate
-from base_objects.models import (
-    BaseObject,
-    BaseObjectField,
-)
+# from base_objects.models import (
+#     BaseObject,
+#     BaseObjectField,
+# )
 
 User = get_user_model()
 
@@ -144,14 +144,14 @@ class TemplateFieldGroup(models.Model):
         verbose_name="Наименование группы полей",
     )
 
-    type_object = models.ForeignKey(
-        BaseObject,
-        on_delete=models.SET_NULL,
-        verbose_name="Обьект",
-        null=True,
-        blank=True,
-        # default=None
-    )
+    # type_object = models.ForeignKey(
+    #     BaseObject,
+    #     on_delete=models.SET_NULL,
+    #     verbose_name="Обьект",
+    #     null=True,
+    #     blank=True,
+    #     # default=None
+    # )
 
     class Meta:
         verbose_name = "Группа полей"
@@ -192,14 +192,13 @@ class TemplateField(models.Model):
         on_delete=models.CASCADE,
         verbose_name="Шаблон",
     )
-    base_object_field = models.ForeignKey(
-        BaseObjectField,
-        on_delete=models.SET_NULL,
-        verbose_name="Поле базового обьекта",
-        null=True,
-        blank=True,
-        default=1
-    )
+    # base_object_field = models.ForeignKey(
+    #     BaseObjectField,
+    #     on_delete=models.SET_NULL,
+    #     verbose_name="Поле базового обьекта",
+    #     null=True,
+    #     blank=True,
+    # )
     tag = models.CharField(max_length=255, verbose_name="Тэг поля")
     name = models.CharField(max_length=255, verbose_name="Наименование поля")
     hint = models.CharField(
