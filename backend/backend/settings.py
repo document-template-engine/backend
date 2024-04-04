@@ -31,9 +31,7 @@ INSTALLED_APPS = [
     "api",
     "users",
     "documents",
-
     "base_objects",
-
     "core",
     'allauth',
     'allauth.account',
