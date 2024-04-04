@@ -185,16 +185,6 @@ SWAGGER_SETTINGS = {
     "BASE_PATH": "https://doki.pro/api/v2/",
 }
 
-
-AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',
-    'allauth.account.auth_backends.AuthenticationBackend',
-]
-
-ACCOUNT_LOGIN_REDIRECT_URL = "https://doky.pro/"
-    "BASE_PATH": "https://doky.pro/api/v2/",
-}
-
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -233,3 +223,10 @@ sentry_sdk.init(
     # We recommend adjusting this value in production.
     profiles_sample_rate=1.0,
 )
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+ACCOUNT_LOGIN_REDIRECT_URL = "https://doky.pro/"
