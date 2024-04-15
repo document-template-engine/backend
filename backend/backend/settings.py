@@ -228,5 +228,7 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
-ACCOUNT_LOGIN_REDIRECT_URL = "https://doky.pro/accounts/vk/login/callback/"
-# ACCOUNT_LOGIN_REDIRECT_URL = "http://localhost:9000/accounts/vk/login/callback/"
+# ACCOUNT_LOGIN_REDIRECT_URL = "https://doky.pro/accounts/vk/login/callback/"
+# ACCOUNT_LOGIN_REDIRECT_URL = "/"
+# ACCOUNT_SIGNUP_REDIRECT_URL = "/"
+# LOGIN_REDIRECT_URL = "/"
