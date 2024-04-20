@@ -1,18 +1,19 @@
-@TOKEN = Token 640063c217c9693de37f04d65249f35a19705efb
-# @URL = https://documents-template.site/
-@URL = http://localhost:8000
+@TOKEN = Token 66ba19730c8aaad7378dc20fae75656b06b00e02
+
+@URL = https://doky.pro/api/v2
+# @URL = http://localhost:8000/api/v2
 
 
 ### Все шаблоны
-GET {{URL}}/api/templates/ 
+GET {{URL}}/templates/ 
 Content-Type: application/json
-Authorization: {{TOKEN}}
+# Authorization: {{TOKEN}}
 
 {
 }
 
 ### Просмотр одного шаблона
-GET {{URL}}/api/templates/1/ 
+GET {{URL}}/templates/22/ 
 Content-Type: application/json
 Authorization: {{TOKEN}}
 
@@ -21,7 +22,7 @@ Authorization: {{TOKEN}}
 
 
 ### Просмотр всех полей шаблона
-GET {{URL}}/api/templates/1/fields
+GET {{URL}}/templates/42/fields
 Content-Type: application/json
 Authorization: {{TOKEN}}
 
@@ -29,7 +30,7 @@ Authorization: {{TOKEN}}
 }
 
 ### Добавить шаблон в избранное
-POST {{URL}}/api/templates/1/favorite/
+POST {{URL}}/templates/22/favorite/
 Content-Type: application/json
 Authorization: {{TOKEN}}
 
@@ -37,15 +38,7 @@ Authorization: {{TOKEN}}
 }
 
 ### Удалить шаблон из избранного
-DELETE {{URL}}/api/templates/1/favorite/
-Content-Type: application/json
-Authorization: {{TOKEN}}
-
-{
-}
-
-### Удалить шаблон из избранного
-DELETE {{URL}}/api/templates/1/favorite/
+DELETE {{URL}}/templates/1/favorite/
 Content-Type: application/json
 Authorization: {{TOKEN}}
 
@@ -54,7 +47,7 @@ Authorization: {{TOKEN}}
 
 
 ### Получить первью документа от анонимного пользователя
-POST {{URL}}/api/templates/1/download_preview/
+POST {{URL}}/templates/22/download_preview/
 Content-Type: application/json
 # Authorization: {{TOKEN}}
 
@@ -98,3 +91,105 @@ Content-Type: application/json
         }
     ]
 }
+
+### Добавить новый шаблон и описание его полей в базу (ТОЛЬКО ДЛЯ АДМИНА)
+POST {{URL}}/templates/
+Content-Type: application/json
+Authorization: {{TOKEN}}
+
+{
+    "name": "Заявление в детский сад",
+    "deleted": true,
+    "description": "Данный шаблон необходим для заполнения заявления в детский сад. Заявление может быть составлено в простой письменной форме. Можно доработать шаблон под себя и прописать наиболее важные поля после его скачивания.",
+    "fields": [
+        {
+            "tag": "ДетскийСадНомерНазвание",
+            "name": "Номер и название детского сада",
+            "hint": "66 Непоседы",
+            "group": 1,
+            "type": "str20",
+            "length": 40
+        },
+        {
+            "tag": "АдресатФИО",
+            "name": "ФИО заведующего (укажите в дательном падеже)",
+            "hint": "Ивановой Ирине Петровне",
+            "group": 2,
+            "type": "fio",
+            "length": 40
+            
+        },
+        {
+            "tag": "ОтправительФИО",
+            "name": "ФИО родителя/законного представителя (в родительном падеже)",
+            "hint": "Иванова Ивана Ивановича",
+            "group": 3,
+            "type": "fio",
+            "length": 40
+        },
+        {
+            "tag": "ОтправительПочтовыйАдрес",
+            "name": "Почтовый адрес",
+            "hint": "город, улица, номер квартиры",
+            "group": 3,
+            "type": "str40",
+            "length": 40
+        },
+        {
+            "tag": "РебенокФИО",
+            "name": "ФИО ребенка (в творительном падеже)",
+            "hint": "Ивановым Данилой Ивановичем",
+            "group": 4,
+            "type": "fio",
+            "length": 40
+        },
+        {
+            "tag": "РебенокГруппа",
+            "name": "Номер или название группы",
+            "hint": "№3 или средняя",
+            "group": 4,
+            "type": "str20",
+            "length": 40
+        },
+        {
+            "tag": "Дата1",
+            "name": "Дата начала отпуска",
+            "hint": "дд.мм.гггг",
+            "type": "date",
+            "length": 40
+        },
+        {
+            "tag": "Дата2",
+            "name": "Дата окончания отпуска",
+            "hint": "дд.мм.гггг",
+            "type": "date",
+            "length": 40
+        },
+        {
+            "tag": "Дата3",
+            "name": "Дата подачи заявления",
+            "hint": "дд.мм.гггг",
+            "type": "date",
+            "length": 40
+        }
+    ],
+    "groups": [
+        {
+            "id": 1,
+            "name": "Данные о детском саде"
+        },
+        {
+            "id": 2,
+            "name": "Адресат"
+        },
+        {
+            "id": 3,
+            "name": "Отправитель"
+        },
+        {
+            "id": 4,
+            "name": "Ребенок"
+        }
+    ]
+}
+

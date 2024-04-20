@@ -1,22 +1,22 @@
-@TOKEN = Token bb4f5dbedaafd2730f35803e7087e797479d68f5
-@URL = https://documents-template.site/
+@TOKEN = Token c911144116cd1689f8fd01e00102bcd1ce4cc175
+# @URL = https://documents-template.site/
+@URL = http://127.0.0.1:8000/api/v2
 
 ###
-GET {{URL}}/api/documents/32/
-Content-Type: application/json
+GET {{URL}}/documents/1
 Authorization: {{TOKEN}}
 
 {
 }
 
 ###
-POST {{URL}}/api/documents/
+POST {{URL}}/documents/
 Content-Type: application/json
 Authorization: {{TOKEN}}
 
 {
       "description": "doc1",
-      "template": 1,
+      "template": 42,
       "completed": true,
       "document_fields": [
         {
@@ -63,7 +63,7 @@ Authorization: {{TOKEN}}
 }
 
 ###
-PATCH  {{URL}}/api/documents/2/
+PATCH  {{URL}}/documents/2/
 Content-Type: application/json
 Authorization: {{TOKEN}}
 
@@ -115,7 +115,7 @@ Authorization: {{TOKEN}}
 }
 
 ###
-get  {{URL}}/api/documents/draft/
+get  {{URL}}/documents/draft/
 Content-Type: application/json
 Authorization: {{TOKEN}}
 
@@ -123,7 +123,7 @@ Authorization: {{TOKEN}}
 }
 
 ###
-get  {{URL}}/api/documents/history/
+get  {{URL}}/documents/history/
 Content-Type: application/json
 Authorization: {{TOKEN}}
 
@@ -131,7 +131,7 @@ Authorization: {{TOKEN}}
 }
 
 ###
-get  {{URL}}/api/documents/2/download_document/
+get  {{URL}}/documents/2/download_document/
 Content-Type: application/json
 Authorization: {{TOKEN}}
 

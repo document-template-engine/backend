@@ -1,9 +1,16 @@
 """Модели документов."""
+from typing import List, Tuple
+
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
 
 from core.constants import Messages
+from core.template_render import DocumentTemplate
+# from base_objects.models import (
+#     BaseObject,
+#     BaseObjectField,
+# )
 
 User = get_user_model()
 
@@ -43,11 +50,15 @@ class Template(models.Model):
         null=True,
         blank=True,
     )
-    template = models.FileField(upload_to="templates/")
+    template = models.FileField(
+        upload_to="templates/", verbose_name="Файл шаблона"
+    )
     name = models.CharField(
         max_length=255, verbose_name="Наименование шаблона"
     )
-    modified = models.DateField(verbose_name="Дата модификации", auto_now=True)
+    updated = models.DateTimeField(
+        verbose_name="Дата изменения", auto_now=True
+    )
     deleted = models.BooleanField(verbose_name="Удален")
     description = models.TextField(verbose_name="Описание шаблона")
     image = models.ImageField(
@@ -79,6 +90,45 @@ class Template(models.Model):
                     print(e)
         return super().save(*args, **kwargs)
 
+    def get_inconsistent_tags(self) -> Tuple[Tuple, Tuple]:
+        """
+        Возвращает списки несогласованных тэгов между БД и шаблоном docx.
+
+        :returns: (excess_tags, excess_fields)
+        excess_tags - кортеж тэгов, которые имеются в docx, но отсутствуют в БД.
+        excess_fields - кортеж тэгов, которые имеются в БД, но отсутствуют в docx.
+        """
+        docx_tags, field_tags = set(), set()
+        if self.template:
+            try:
+                doc = DocumentTemplate(self.template)
+                docx_tags = set(doc.get_tags())
+            except Exception as e:
+                print(e)  # TODO: add logging
+
+        field_tags = {field.tag for field in self.fields.all()}
+        excess_tags = tuple(docx_tags - field_tags)
+        excess_fields = tuple(field_tags - docx_tags)
+        return (excess_tags, excess_fields)
+
+    def get_consistency_errors(self) -> List:
+        """Генерирует ответ в зависимости от согласованности полей шаблона."""
+
+        excess_tags, excess_fields = self.get_inconsistent_tags()
+        errors = []
+        if excess_tags:
+            errors.append(
+                {"message": Messages.TEMPLATE_EXCESS_TAGS, "tags": excess_tags}
+            )
+        if excess_fields:
+            errors.append(
+                {
+                    "message": Messages.TEMPLATE_EXCESS_FIELDS,
+                    "tags": excess_fields,
+                }
+            )
+        return errors
+
 
 class TemplateFieldGroup(models.Model):
     """Группы полей шаблона."""
@@ -93,6 +143,15 @@ class TemplateFieldGroup(models.Model):
         max_length=255,
         verbose_name="Наименование группы полей",
     )
+
+    # type_object = models.ForeignKey(
+    #     BaseObject,
+    #     on_delete=models.SET_NULL,
+    #     verbose_name="Обьект",
+    #     null=True,
+    #     blank=True,
+    #     # default=None
+    # )
 
     class Meta:
         verbose_name = "Группа полей"
@@ -133,6 +192,13 @@ class TemplateField(models.Model):
         on_delete=models.CASCADE,
         verbose_name="Шаблон",
     )
+    # base_object_field = models.ForeignKey(
+    #     BaseObjectField,
+    #     on_delete=models.SET_NULL,
+    #     verbose_name="Поле базового обьекта",
+    #     null=True,
+    #     blank=True,
+    # )
     tag = models.CharField(max_length=255, verbose_name="Тэг поля")
     name = models.CharField(max_length=255, verbose_name="Наименование поля")
     hint = models.CharField(
@@ -156,6 +222,12 @@ class TemplateField(models.Model):
     )
     length = models.PositiveIntegerField(
         blank=True, null=True, verbose_name="Размер поля ввода"
+    )
+    default = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="Значение по умолчанию",
     )
 
     class Meta:
@@ -215,7 +287,6 @@ class Document(models.Model):
             template_field = field_data["field"]
             template = TemplateField.objects.get(id=template_field.id).template
             if self.template == template:
-                # Эту проверку надо в валидатор засунуть.
                 # Проверяется, принадлежит ли поле шаблону документа
                 document_fields.append(
                     DocumentField(
@@ -237,7 +308,6 @@ class DocumentField(models.Model):
         related_name="document_fields",
     )
     value = models.CharField(max_length=255, verbose_name="Содержимое поля")
-    # description = models.CharField(verbose_name="Описание поля", blank=True)
     document = models.ForeignKey(
         Document,
         on_delete=models.CASCADE,
@@ -253,27 +323,6 @@ class DocumentField(models.Model):
     def __str__(self):
         """Отображение - шаблон поле."""
         return f"{self.field.template} {self.field}"
-
-    # class FieldToDocument(models.Model):
-    #     """Связь полей и документов."""
-
-    #     document = models.ForeignKey(
-    #         Document,
-    #         on_delete=models.CASCADE,
-    #         related_name="document_of_field",
-    #     )
-    #     fields = models.ForeignKey(
-    #         DocumentField,
-    #         on_delete=models.CASCADE,
-    #         related_name="fields_of_document",
-    #     )
-
-    #     class Meta:
-    #         verbose_name = "Связь между полем и документом"
-    #         verbose_name_plural = "Связи между полями и документами"
-
-    # def __str__(self):
-    #     return f"{self.document} {self.fields}"
 
 
 class FavTemplate(models.Model):
